@@ -22,6 +22,7 @@ import HomeView from './views/HomeView.vue'
 
 body {
   margin: 0;
+  width: 100%;
   min-width: 320px;
   min-height: 100vh;
   overflow-wrap: anywhere;
@@ -41,6 +42,8 @@ a {
 
 .app-shell {
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.8), transparent 330px),
     radial-gradient(circle at top left, rgba(47, 121, 99, 0.16), transparent 340px),
@@ -395,7 +398,8 @@ select:focus {
 }
 
 .search-input {
-  min-width: min(100%, 280px);
+  min-width: 0;
+  width: 100%;
   flex: 1;
   display: flex;
   align-items: center;
@@ -571,6 +575,28 @@ select:focus {
 @media (max-width: 920px) {
   .workspace {
     grid-template-columns: 1fr;
+    padding: 22px 16px 44px;
+  }
+
+  .search-bar,
+  .filter-panel,
+  .place-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filter-panel {
+    padding: 14px 12px;
+  }
+
+  .review-filter,
+  .search-input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .place-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -580,9 +606,14 @@ select:focus {
     padding-top: 86px;
   }
 
+  .hero > div {
+    max-width: 100%;
+  }
+
   .search-bar,
   .filter-panel,
-  .place-head {
+  .place-head,
+  .address-card {
     align-items: stretch;
     flex-direction: column;
   }
