@@ -3,6 +3,7 @@ import { searchPlaces } from "../services/nominatim";
 import { routeDistanceKm } from "../services/osrm";
 import { haversineKm } from "../utils/distance";
 import { fetchPlaceImage } from "../services/imageService";
+import { fetchPlaceVideos } from "../services/videoService";
 
 const places = ref([]);
 const isSearching = ref(false);
@@ -43,17 +44,21 @@ export function usePlaceStore() {
         }),
       );
 
-      // Fetch images for places in the background
-      // Start with first 3 places immediately, then fetch others
+      // Fetch media in the background
       places.value.slice(0, 3).forEach((place, index) => {
         fetchPlaceImage(place).then((image) => {
           if (image && places.value[index]) {
             places.value[index].image = image;
           }
         });
+
+        fetchPlaceVideos(place).then((videos) => {
+          if (videos.length && places.value[index]) {
+            places.value[index].videos = videos;
+          }
+        });
       });
 
-      // Fetch remaining images in parallel
       places.value.slice(3).forEach((place, index) => {
         setTimeout(
           () => {
@@ -63,9 +68,16 @@ export function usePlaceStore() {
                 places.value[actualIndex].image = image;
               }
             });
+
+            fetchPlaceVideos(place).then((videos) => {
+              const actualIndex = index + 3;
+              if (videos.length && places.value[actualIndex]) {
+                places.value[actualIndex].videos = videos;
+              }
+            });
           },
           100 * (index + 1),
-        ); // Stagger requests to avoid overwhelming the API
+        );
       });
     } catch (err) {
       error.value = err.message || "Search failed.";

@@ -98,7 +98,7 @@ function isInsideIndia({ lat, lon }) {
   return lat >= 6.5546079 && lat <= 35.6745457 && lon >= 68.1113787 && lon <= 97.395561
 }
 
-function nearbyViewbox(origin, radiusDegrees = 0.45) {
+function nearbyViewbox(origin, radiusDegrees = 5) {
   if (!origin?.lat || !origin?.lon) return indiaViewbox
 
   const minLon = Math.max(68.1113787, Number(origin.lon) - radiusDegrees)
@@ -267,7 +267,7 @@ async function searchPhoton(query, limit, options = {}) {
 
 export async function searchPlaces(query, { limit = 12, origin = null } = {}) {
   const [nominatimResults, photonResults] = await Promise.all([
-    searchNominatim(query, limit, { origin, radiusDegrees: 0.45 }).catch(() => []),
+    searchNominatim(query, limit, { origin, radiusDegrees: 5 }).catch(() => []),
     searchPhoton(query, limit, { origin }).catch(() => []),
   ])
 

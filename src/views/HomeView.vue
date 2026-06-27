@@ -1,4 +1,6 @@
 <script setup>
+import { watch } from 'vue'
+import { MapPin } from 'lucide-vue-next'
 import AddressForm from '../components/address/AddressForm.vue'
 import AddressList from '../components/address/AddressList.vue'
 import FilterPanel from '../components/filters/FilterPanel.vue'
@@ -15,18 +17,33 @@ const {
   removeAddress,
   selectAddress,
 } = useAddressStore()
-const { sortedPlaces, isSearching, error, reviewFilter, search, clearResults } = usePlaceStore()
+const { sortedPlaces, isSearching, error, reviewFilter, query, search, clearResults } = usePlaceStore()
+
+watch(selectedAddress, (nextAddress, previousAddress) => {
+  if (!nextAddress || !query.value || nextAddress === previousAddress) return
+  search(query.value, nextAddress)
+})
 </script>
 
 <template>
   <main class="app-shell">
     <section class="hero">
-      <div>
+      <div class="hero-copy">
         <p class="eyebrow">Local browser storage • Free map data • No login</p>
         <h1>NearMe Pro</h1>
         <p>
           Save Home, Work, or Other locations, search nearby places, and open routes directly in Google Maps.
         </p>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="hero-badge">
+          <div class="hero-badge-icon">
+            <MapPin :size="24" />
+          </div>
+          <strong>Search faster with smart suggestions</strong>
+          <span>Autocomplete, local routing, place images, and video previews all in one place.</span>
+        </div>
       </div>
     </section>
 
