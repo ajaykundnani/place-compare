@@ -23,7 +23,7 @@ const { sortedPlaces, isSearching, error, reviewFilter, search, clearResults } =
     <section class="hero">
       <div>
         <p class="eyebrow">Local browser storage • Free map data • No login</p>
-        <h1>Compare places from your saved addresses</h1>
+        <h1>NearMe Pro</h1>
         <p>
           Save Home, Work, or Other locations, search nearby places, and open routes directly in Google Maps.
         </p>

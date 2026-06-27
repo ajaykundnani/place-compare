@@ -1,6 +1,7 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Loader2, Search, X } from 'lucide-vue-next'
+import { searchPlaces } from '../../services/nominatim'
 
 defineProps({
   loading: { type: Boolean, default: false },
@@ -9,23 +10,78 @@ defineProps({
 
 const emit = defineEmits(['search', 'clear'])
 const term = ref('')
+const suggestions = ref([])
+const isSuggesting = ref(false)
+
+const hasSuggestions = computed(() => suggestions.value.length > 0)
+
+let suggestionTimer = null
+
+async function loadSuggestions(query) {
+  if (!query.trim()) {
+    suggestions.value = []
+    isSuggesting.value = false
+    return
+  }
+
+  isSuggesting.value = true
+  try {
+    const matches = await searchPlaces(query, { limit: 5 })
+    suggestions.value = matches
+  } catch (err) {
+    suggestions.value = []
+  } finally {
+    isSuggesting.value = false
+  }
+}
+
+function handleInput() {
+  if (suggestionTimer) clearTimeout(suggestionTimer)
+  suggestionTimer = setTimeout(() => {
+    loadSuggestions(term.value)
+  }, 250)
+}
+
+function chooseSuggestion(value) {
+  term.value = value
+  suggestions.value = []
+  emit('search', value)
+}
 
 function submit() {
+  suggestions.value = []
   emit('search', term.value)
 }
 
 function clear() {
   term.value = ''
+  suggestions.value = []
   emit('clear')
 }
 </script>
 
 <template>
   <form class="search-bar" @submit.prevent="submit">
-    <div class="search-input">
-      <Search :size="20" />
-      <input v-model="term" :disabled="disabled" placeholder="Search hospitals, cafes, schools, malls..." />
+    <div class="search-input-wrap">
+      <div class="search-input">
+        <Search :size="20" />
+        <input v-model="term" :disabled="disabled" placeholder="Search hospitals, cafes, schools, malls..." @input="handleInput" />
+      </div>
+
+      <div v-if="hasSuggestions" class="search-suggestions">
+        <button
+          v-for="suggestion in suggestions"
+          :key="suggestion.id"
+          type="button"
+          class="suggestion-item"
+          @click="chooseSuggestion(suggestion.name)"
+        >
+          <strong>{{ suggestion.name }}</strong>
+          <small>{{ suggestion.displayName }}</small>
+        </button>
+      </div>
     </div>
+
     <button class="primary-button" type="submit" :disabled="disabled || loading || !term.trim()">
       <Loader2 v-if="loading" class="spin" :size="18" />
       <Search v-else :size="18" />

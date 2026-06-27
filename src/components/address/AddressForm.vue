@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { Check, Crosshair, Home, Loader2, Plus, Search, Tag } from 'lucide-vue-next'
 import { findAddressCandidates, isInsideIndia } from '../../services/nominatim'
 
@@ -17,8 +17,11 @@ const isSaving = ref(false)
 const isLocating = ref(false)
 const error = ref('')
 const candidates = ref([])
+const suggestions = ref([])
+const isSuggesting = ref(false)
 
 const hasCandidates = computed(() => candidates.value.length > 0)
+const hasSuggestions = computed(() => suggestions.value.length > 0)
 
 function parseCoordinates(value) {
   const mapsAtPattern = /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/
@@ -50,7 +53,48 @@ function emitAddress(place, sourceLabel = '') {
   form.context = ''
   form.coordinates = ''
   candidates.value = []
+  suggestions.value = []
 }
+
+let suggestionTimer = null
+
+async function loadSuggestions(query) {
+  if (!query.trim()) {
+    suggestions.value = []
+    isSuggesting.value = false
+    return
+  }
+
+  isSuggesting.value = true
+  try {
+    const matches = await findAddressCandidates(query, { context: form.context, limit: 5 })
+    suggestions.value = matches
+  } catch (err) {
+    suggestions.value = []
+  } finally {
+    isSuggesting.value = false
+  }
+}
+
+function handleAddressInput() {
+  if (suggestionTimer) clearTimeout(suggestionTimer)
+  suggestionTimer = setTimeout(() => {
+    loadSuggestions(form.address)
+  }, 250)
+}
+
+function chooseSuggestion(suggestion) {
+  form.address = suggestion.displayName || suggestion.name
+  suggestions.value = []
+  submit()
+}
+
+watch(
+  () => form.context,
+  () => {
+    if (form.address.trim()) handleAddressInput()
+  },
+)
 
 async function submit() {
   if (!form.address.trim()) {
@@ -226,8 +270,30 @@ async function useCurrentLocation() {
 
     <label>
       Society / Building / Address
-      <textarea v-model="form.address" rows="3" placeholder="Devgram Residency, tower name, flat area, landmark"></textarea>
+      <textarea
+        v-model="form.address"
+        rows="3"
+        placeholder="Add your Address, Society, Building, or Street name"
+        @input="handleAddressInput"
+      ></textarea>
     </label>
+
+    <div v-if="hasSuggestions" class="candidate-list suggestions-list">
+      <p class="candidate-title">Suggestions</p>
+      <button
+        v-for="suggestion in suggestions"
+        :key="suggestion.id"
+        class="candidate-button"
+        type="button"
+        @click="chooseSuggestion(suggestion)"
+      >
+        <span>
+          <strong>{{ suggestion.name }}</strong>
+          <small>{{ suggestion.displayName }}</small>
+        </span>
+        <Check :size="18" />
+      </button>
+    </div>
 
     <label>
       Area / City

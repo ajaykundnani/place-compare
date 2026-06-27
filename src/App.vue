@@ -397,6 +397,12 @@ select:focus {
   padding-top: 12px;
 }
 
+.suggestions-list {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: -4px;
+}
+
 .candidate-title {
   margin: 0;
   color: #435049;
@@ -442,6 +448,12 @@ select:focus {
   padding: 12px;
 }
 
+.search-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
 .search-input {
   min-width: 0;
   width: 100%;
@@ -459,6 +471,41 @@ select:focus {
   border: 0;
   box-shadow: none;
   padding-left: 0;
+}
+
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #d9e7f7;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+}
+
+.suggestion-item {
+  display: grid;
+  gap: 2px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #17211c;
+  padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.suggestion-item:hover {
+  background: #f3f8ff;
+}
+
+.suggestion-item small {
+  color: #64748b;
 }
 
 .filter-panel {
