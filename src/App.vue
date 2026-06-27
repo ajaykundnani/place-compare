@@ -9,7 +9,7 @@ import HomeView from './views/HomeView.vue'
 <style>
 :root {
   color: #17211c;
-  background: #f5f7f2;
+  background: #f4f9ff;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
@@ -45,9 +45,9 @@ a {
   width: 100%;
   overflow-x: hidden;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.8), transparent 330px),
-    radial-gradient(circle at top left, rgba(47, 121, 99, 0.16), transparent 340px),
-    #f5f7f2;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), transparent 330px),
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 340px),
+    #f4f9ff;
 }
 
 .hero {
@@ -56,14 +56,28 @@ a {
   align-items: end;
   padding: 44px clamp(18px, 4vw, 56px) 30px;
   background:
-    linear-gradient(90deg, rgba(20, 33, 28, 0.82), rgba(20, 33, 28, 0.44)),
-    url("https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1600&q=80")
-      center/cover;
+    linear-gradient(135deg, rgba(37, 99, 235, 0.95) 0%, rgba(96, 165, 250, 0.85) 45%, rgba(191, 219, 254, 0.9) 100%),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.36), transparent 28%);
   color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.24), transparent 18%),
+    radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.18), transparent 16%),
+    radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.14), transparent 22%);
+  pointer-events: none;
 }
 
 .hero > div {
   max-width: 760px;
+  position: relative;
+  z-index: 1;
 }
 
 .hero h1 {
@@ -82,7 +96,7 @@ a {
 
 .eyebrow {
   margin: 0;
-  color: #31715f;
+  color: #2563eb;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0;
@@ -90,7 +104,7 @@ a {
 }
 
 .hero .eyebrow {
-  color: #bcf4d6;
+  color: #dbeafe;
 }
 
 .workspace {
@@ -169,8 +183,8 @@ textarea {
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: #2d7c64;
-  box-shadow: 0 0 0 4px rgba(45, 124, 100, 0.13);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
 .tag-row,
@@ -205,7 +219,7 @@ select:focus {
 
 .tag-button.active,
 .primary-button {
-  background: #20755e;
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   color: #fff;
 }
 
@@ -229,6 +243,37 @@ select:focus {
 .action-button {
   border: 1px solid #d7dfda;
   background: #fff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
+  border-color: #2563eb;
+}
+
+.primary-action {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  color: #fff;
+  border-color: transparent;
+}
+
+.icon-action {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.24);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.icon-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.3);
 }
 
 .icon-button {
@@ -302,8 +347,8 @@ select:focus {
 }
 
 .address-card.selected {
-  border-color: #20755e;
-  box-shadow: inset 0 0 0 1px #20755e;
+  border-color: #2563eb;
+  box-shadow: inset 0 0 0 1px #2563eb;
 }
 
 .address-main {
@@ -337,8 +382,8 @@ select:focus {
 .address-tag {
   width: fit-content;
   border-radius: 999px;
-  background: #edf5f1;
-  color: #20755e;
+  background: #eff6ff;
+  color: #2563eb;
   padding: 3px 9px;
   font-size: 0.75rem;
   font-weight: 850;
@@ -490,6 +535,14 @@ select:focus {
   gap: 7px;
   color: rgba(255, 255, 255, 0.84);
   font-weight: 820;
+}
+
+.empty-media.loading {
+  background: linear-gradient(135deg, #28473c 0%, #a9cbbd 100%);
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
 }
 
 .distance-pill {

@@ -104,7 +104,7 @@ function saveCoordinates() {
   )
 }
 
-function useCurrentLocation() {
+async function useCurrentLocation() {
   if (!navigator.geolocation) {
     error.value = 'Current location is not supported in this browser.'
     return
@@ -113,35 +113,88 @@ function useCurrentLocation() {
   isLocating.value = true
   error.value = ''
 
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      isLocating.value = false
-      const coords = {
-        lat: position.coords.latitude,
-        lon: position.coords.longitude,
-      }
+  const tryGeolocation = () =>
+    new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0,
+      })
+    })
 
-      if (!isInsideIndia(coords)) {
+  async function tryIpFallback() {
+    try {
+      const response = await fetch('https://ipapi.co/json/')
+      if (!response.ok) return null
+      const data = await response.json()
+      if (typeof data.latitude === 'number' && typeof data.longitude === 'number') {
+        return {
+          lat: Number(data.latitude),
+          lon: Number(data.longitude),
+          accuracy: 5000,
+          source: 'Approximate IP location',
+        }
+      }
+    } catch (err) {
+      console.warn('IP geolocation fallback failed', err)
+    }
+    return null
+  }
+
+  try {
+    const position = await tryGeolocation()
+    const coords = {
+      lat: position.coords.latitude,
+      lon: position.coords.longitude,
+    }
+
+    if (!isInsideIndia(coords)) {
+      error.value = 'Your current location is outside India, so it cannot be saved.'
+      return
+    }
+
+    emitAddress(
+      {
+        displayName: `${form.address || form.label || form.tag} (current location, ${Math.round(position.coords.accuracy)} m accuracy)`,
+        lat: coords.lat,
+        lon: coords.lon,
+        isApproximate: position.coords.accuracy > 100,
+      },
+      'Device GPS',
+    )
+  } catch (err) {
+    const fallback = await tryIpFallback()
+
+    if (fallback) {
+      if (!isInsideIndia({ lat: fallback.lat, lon: fallback.lon })) {
         error.value = 'Your current location is outside India, so it cannot be saved.'
         return
       }
 
       emitAddress(
         {
-          displayName: `${form.address || form.label || form.tag} (current location, ${Math.round(position.coords.accuracy)} m accuracy)`,
-          lat: coords.lat,
-          lon: coords.lon,
-          isApproximate: position.coords.accuracy > 100,
+          displayName: `${form.address || form.label || form.tag} (approximate current location, ${Math.round(fallback.accuracy)} m accuracy)`,
+          lat: fallback.lat,
+          lon: fallback.lon,
+          isApproximate: true,
         },
-        'Device GPS',
+        fallback.source,
       )
-    },
-    () => {
-      isLocating.value = false
-      error.value = 'Location permission was blocked or unavailable.'
-    },
-    { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
-  )
+      return
+    }
+
+    const code = err?.code
+    const message =
+      code === 1
+        ? 'Location permission was denied. Please allow location access and try again.'
+        : code === 2
+          ? 'Your device could not determine the current location. Please check your connection or try again.'
+          : 'Location permission was blocked or unavailable on this device.'
+
+    error.value = message
+  } finally {
+    isLocating.value = false
+  }
 }
 </script>
 
