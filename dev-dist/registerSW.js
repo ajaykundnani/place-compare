@@ -1,1 +1,0 @@
-if('serviceWorker' in navigator) navigator.serviceWorker.register('/place-compare/dev-sw.js?dev-sw', { scope: '/place-compare/', type: 'classic' })

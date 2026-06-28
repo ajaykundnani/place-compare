@@ -1,6 +1,5 @@
 import { computed, ref } from "vue";
-import { searchPlaces } from "../services/nominatim";
-import { routeDistanceKm } from "../services/osrm";
+import { searchPlaces, routeDistanceKm } from "../services/googleMaps";
 import { haversineKm } from "../utils/distance";
 import { fetchPlaceImage } from "../services/imageService";
 import { fetchPlaceVideos } from "../services/videoService";

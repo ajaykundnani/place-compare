@@ -18,8 +18,8 @@ export default defineConfig({
         enabled: true,
       },
       manifest: {
-        name: "Place Compare",
-        short_name: "PlaceCompare",
+        name: "NearLio",
+        short_name: "NearLio",
         description:
           "Save India addresses locally, search nearby places, compare distance, and open directions in Google Maps.",
         theme_color: "#3b82f6",

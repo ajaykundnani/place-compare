@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { Loader2, Search, X } from 'lucide-vue-next'
-import { searchPlaces } from '../../services/nominatim'
+import { autocompletePlaces } from '../../services/googleMaps'
 
 defineProps({
   loading: { type: Boolean, default: false },
@@ -26,7 +26,7 @@ async function loadSuggestions(query) {
 
   isSuggesting.value = true
   try {
-    const matches = await searchPlaces(query, { limit: 5 })
+    const matches = await autocompletePlaces(query, 5)
     suggestions.value = matches
   } catch (err) {
     suggestions.value = []

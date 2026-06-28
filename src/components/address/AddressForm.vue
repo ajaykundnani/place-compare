@@ -1,7 +1,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { Check, Crosshair, Home, Loader2, Plus, Search, Tag } from 'lucide-vue-next'
-import { findAddressCandidates, isInsideIndia } from '../../services/nominatim'
+import { findAddressCandidates, isInsideIndia } from '../../services/googleMaps'
 
 const emit = defineEmits(['save'])
 
