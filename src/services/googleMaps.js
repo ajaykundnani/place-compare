@@ -32,6 +32,7 @@ function requireKey() {
 
 function normalizePlace(result) {
   const photo = result.photos?.[0]
+  const hours = result.opening_hours
   return {
     id: `google-${result.place_id}`,
     name: result.name || 'Unnamed place',
@@ -44,7 +45,8 @@ function normalizePlace(result) {
     website: result.website || '',
     googleMapsUrl: result.url || '',
     image: photo ? photo.getUrl({ maxWidth: 400 }) : '',
-    openingHours: result.opening_hours?.weekday_text?.join('; ') || '',
+    openNow: hours?.open_now ?? null,
+    openingHours: hours || null,
     rating: result.rating || null,
     reviews: [],
     videos: [],
@@ -71,7 +73,6 @@ export async function autocompletePlaces(input, limit = 5) {
       {
         input,
         types: ['geocode', 'establishment'],
-        componentRestrictions: { country: 'in' },
       },
       (predictions, status) => {
         if (status !== 'OK' && status !== 'ZERO_RESULTS') {
@@ -106,7 +107,6 @@ export async function searchPlaces(query, { limit = 12, origin = null } = {}) {
 
   const request = {
     query,
-    region: 'in',
   }
 
   if (origin) {
@@ -130,7 +130,7 @@ export async function searchPlaces(query, { limit = 12, origin = null } = {}) {
       try {
         const details = await new Promise((resolve, reject) => {
           service.getDetails(
-            { placeId, fields: ['formatted_phone_number', 'website', 'url'] },
+            { placeId, fields: ['formatted_phone_number', 'website', 'url', 'opening_hours'] },
             (result, status) => {
               if (status === 'OK' && result) resolve(result)
               else resolve(null)
@@ -141,6 +141,10 @@ export async function searchPlaces(query, { limit = 12, origin = null } = {}) {
           place.phone = details.formatted_phone_number || ''
           place.website = details.website || ''
           place.googleMapsUrl = details.url || ''
+          if (details.opening_hours) {
+            place.openNow = details.opening_hours.open_now ?? null
+            place.openingHours = details.opening_hours
+          }
         }
       } catch (_) {}
       return place
@@ -158,7 +162,7 @@ export async function findAddressCandidates(query, { context = '', limit = 8 } =
   const fullQuery = [query, context].filter(Boolean).join(', ')
 
   return new Promise((resolve, reject) => {
-    geocoder.geocode({ address: fullQuery, region: 'in' }, (results, status) => {
+    geocoder.geocode({ address: fullQuery }, (results, status) => {
       if (status === 'ZERO_RESULTS') resolve([])
       else if (status !== 'OK') reject(new Error(`Geocoding error: ${status}`))
       else {
@@ -197,31 +201,43 @@ export async function geocodeAddress(query, options = {}) {
   return results[0]
 }
 
-export async function routeDistanceKm(start, end) {
+export async function routeDistanceKm(start, end, travelMode = 'DRIVING') {
   requireKey()
   const maps = await loadMaps()
   const service = new maps.DistanceMatrixService()
 
+  const params = {
+    origins: [new maps.LatLng(start.lat, start.lon)],
+    destinations: [new maps.LatLng(end.lat, end.lon)],
+    travelMode,
+  }
+
+  if (travelMode === 'DRIVING') {
+    params.drivingOptions = {
+      departureTime: new Date(),
+    }
+  }
+
   return new Promise((resolve) => {
-    service.getDistanceMatrix(
-      {
-        origins: [new maps.LatLng(start.lat, start.lon)],
-        destinations: [new maps.LatLng(end.lat, end.lon)],
-        travelMode: 'DRIVING',
-      },
-      (response, status) => {
-        if (status !== 'OK') {
-          resolve(null)
-          return
+    service.getDistanceMatrix(params, (response, status) => {
+      if (status !== 'OK') {
+        resolve(null)
+        return
+      }
+      const element = response.rows?.[0]?.elements?.[0]
+      if (element?.status === 'OK' && element.distance?.value != null) {
+        const result = {
+          distanceKm: element.distance.value / 1000,
+          durationSeconds: element.duration?.value ?? null,
         }
-        const element = response.rows?.[0]?.elements?.[0]
-        if (element?.status === 'OK' && element.distance?.value != null) {
-          resolve(element.distance.value / 1000)
-        } else {
-          resolve(null)
+        if (element.duration_in_traffic?.value != null) {
+          result.durationInTrafficSeconds = element.duration_in_traffic.value
         }
-      },
-    )
+        resolve(result)
+      } else {
+        resolve(null)
+      }
+    })
   })
 }
 

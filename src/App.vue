@@ -1296,12 +1296,35 @@ select:focus {
   padding: 16px;
 }
 
+.result-card-type-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .result-card-type {
   color: var(--accent);
   font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.result-card-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.rating-star-icon {
+  color: #f59e0b;
 }
 
 .result-card-name {
@@ -1311,11 +1334,7 @@ select:focus {
   line-height: 1.2;
 }
 
-.result-card-dist {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.88rem;
-}
+
 
 .result-card-actions {
   display: flex;
@@ -1351,6 +1370,140 @@ select:focus {
 
 .action-btn[title="Directions"]:hover {
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.transport-mode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 4px;
+}
+
+.transport-mode-group {
+  display: flex;
+  gap: 6px;
+  background: #f1f5f9;
+  border-radius: 14px;
+  padding: 4px;
+}
+
+.transport-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #475569;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.transport-mode-btn:hover {
+  color: var(--text);
+}
+
+.transport-mode-btn.active {
+  background: #fff;
+  color: var(--accent);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.recalc-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.traffic-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+  background: #94a3b8;
+  flex-shrink: 0;
+}
+
+.traffic-dot.traffic-high {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+}
+
+.traffic-dot.traffic-moderate {
+  background: #f97316;
+  box-shadow: 0 0 6px rgba(249, 115, 22, 0.5);
+}
+
+.traffic-dot.traffic-low {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+
+.result-card-dist {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.result-card-duration-sep {
+  color: #cbd5e1;
+}
+
+.result-card-duration {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.duration-icon {
+  color: #94a3b8;
+}
+
+.result-card-traffic-duration {
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.result-card-hours {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.result-card-hours.open-now {
+  color: #059669;
+}
+
+.result-card-hours.closed-now {
+  color: #dc2626;
+}
+
+.share-btn {
+  background: #f0f9ff;
+  color: #0369a1;
+  border-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.share-btn:hover {
+  background: #e0f2fe;
+  box-shadow: 0 4px 12px rgba(3, 105, 161, 0.2);
 }
 
 .action-btn[title="Call"] {

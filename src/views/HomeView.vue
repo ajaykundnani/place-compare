@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
-import { Image, Loader2, MapPin, Navigation, Play, Search, User, X } from 'lucide-vue-next'
+import { Bike, Car, Clock, Image, Loader2, MapPin, Motorbike, Navigation, Play, Search, Share2, Star, User, X } from 'lucide-vue-next'
 import AddressForm from '../components/address/AddressForm.vue'
 import AddressList from '../components/address/AddressList.vue'
 import FilterPanel from '../components/filters/FilterPanel.vue'
@@ -8,7 +8,7 @@ import SearchBar from '../components/search/SearchBar.vue'
 import { useAddressStore } from '../stores/addressStore'
 import { usePlaceStore } from '../stores/placeStore'
 import { fetchPlacePhotos } from '../services/googleMaps'
-import { formatKm } from '../utils/distance'
+import { formatKm, formatDuration } from '../utils/distance'
 import { directionsUrl } from '../utils/maps'
 
 const {
@@ -19,7 +19,18 @@ const {
   removeAddress,
   selectAddress,
 } = useAddressStore()
-const { sortedPlaces, isSearching, error, reviewFilter, query, search, clearResults } = usePlaceStore()
+const {
+  sortedPlaces,
+  isSearching,
+  isRecalculating,
+  error,
+  query,
+  transportMode,
+  search,
+  clearResults,
+  recalculateDistances,
+  modeToDirectionsMode,
+} = usePlaceStore()
 const hasQuery = computed(() => !!query.value)
 
 const showForm = ref(false)
@@ -139,10 +150,81 @@ function nextMenuPhoto() {
   activeMenuPhotoIndex.value = (activeMenuPhotoIndex.value + 1) % menuPhotos.value.length
 }
 
+function trafficLabel(place) {
+  if (place.trafficLevel === 'high') return 'Heavy traffic'
+  if (place.trafficLevel === 'moderate') return 'Moderate traffic'
+  if (place.trafficLevel === 'low') return 'Light traffic'
+  return 'No traffic data'
+}
+
+function formatOpenTime(time) {
+  if (!time || time.length < 4) return ''
+  const hours = parseInt(time.substring(0, 2), 10)
+  const minutes = time.substring(2)
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  const display = hours % 12 || 12
+  return `${display}:${minutes} ${ampm}`
+}
+
+function openStatus(place) {
+  const hours = place.openingHours
+  if (!hours) return null
+  const today = new Date().getDay()
+  const todayPeriod = hours.periods?.find(p => p.open?.day === today)
+  if (hours.open_now) {
+    if (todayPeriod?.close) {
+      return { label: `Open till ${formatOpenTime(todayPeriod.close.time)}`, cls: 'open-now' }
+    }
+    return null
+  }
+  if (todayPeriod?.close) {
+    return { label: 'Closed now', cls: 'closed-now' }
+  }
+  if (hours.periods?.length) {
+    return { label: 'Closed today', cls: 'closed-now' }
+  }
+  return null
+}
+
 function handleClear() {
   clearResults()
   activeCategory.value = 'All'
 }
+
+const transportModes = [
+  { key: 'car', icon: Car, label: 'Car' },
+  { key: 'bike', icon: Motorbike, label: 'Bike' },
+  { key: 'cycle', icon: Bike, label: 'Cycle' },
+]
+
+function setTransportMode(mode) {
+  transportMode.value = mode
+}
+
+async function sharePlace(place) {
+  const mode = modeToDirectionsMode[transportMode.value] || 'driving'
+  const url = directionsUrl(selectedAddress.value, place, mode)
+  const dist = formatKm(place.distanceKm)
+  const shareData = {
+    title: place.name,
+    text: `Check out ${place.name} — ${dist} away from my location!`,
+    url,
+  }
+  if (navigator.share) {
+    try { await navigator.share(shareData) } catch (_) {}
+  } else {
+    try {
+      await navigator.clipboard.writeText(url)
+      alert('Link copied to clipboard!')
+    } catch (_) {}
+  }
+}
+
+watch(transportMode, () => {
+  if (selectedAddress.value && query.value) {
+    recalculateDistances(selectedAddress.value)
+  }
+})
 
 watch(selectedAddress, (nextAddress, previousAddress) => {
   if (!nextAddress || !query.value || nextAddress === previousAddress) return
@@ -241,10 +323,25 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
         <FilterPanel
           v-if="hasResults"
           :count="filteredPlaces.length"
-          :review-filter="reviewFilter"
-          :has-reviews="false"
-          @update:review-filter="reviewFilter = $event"
         />
+
+        <div v-if="hasResults" class="transport-mode-bar">
+          <div class="transport-mode-group">
+            <button
+              v-for="mode in transportModes"
+              :key="mode.key"
+              class="transport-mode-btn"
+              :class="{ active: transportMode === mode.key }"
+              @click="setTransportMode(mode.key)"
+            >
+              <component :is="mode.icon" :size="16" />
+              {{ mode.label }}
+            </button>
+          </div>
+          <span v-if="isRecalculating" class="recalc-indicator">
+            <Loader2 :size="14" class="spin" /> Updating...
+          </span>
+        </div>
 
         <p v-if="error" class="error">{{ error }}</p>
 
@@ -268,14 +365,50 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                 </template>
               </div>
               <div class="result-card-body">
-                <span class="result-card-type">{{ place.type || 'Place' }}</span>
+                <div class="result-card-type-row">
+                  <span class="result-card-type">{{ place.type || 'Place' }}</span>
+                  <span v-if="place.rating" class="result-card-rating">
+                    <Star :size="12" class="rating-star-icon" />
+                    {{ place.rating.toFixed(1) }}
+                  </span>
+                </div>
                 <h3 class="result-card-name">{{ place.name }}</h3>
-                <p class="result-card-dist">{{ formatKm(place.distanceKm) }} away</p>
+                <p class="result-card-dist">
+                  <span
+                    class="traffic-dot"
+                    :class="{
+                      'traffic-high': place.trafficLevel === 'high',
+                      'traffic-moderate': place.trafficLevel === 'moderate',
+                      'traffic-low': place.trafficLevel === 'low' || (transportMode !== 'car' && place.trafficLevel == null && place.distanceKm != null),
+                    }"
+                    :title="trafficLabel(place)"
+                  ></span>
+                  {{ formatKm(place.distanceKm) }} away
+                  <template v-if="place.durationSeconds">
+                    <span class="result-card-duration-sep">·</span>
+                    <span class="result-card-duration">
+                      <Clock :size="13" class="duration-icon" />
+                      {{ formatDuration(place.durationInTrafficSeconds || place.durationSeconds) }}
+                    </span>
+                  </template>
+                </p>
+                <p v-if="openStatus(place)" class="result-card-hours" :class="openStatus(place).cls">
+                  {{ openStatus(place).label }}
+                </p>
                 <div class="result-card-actions">
-                  <a class="action-btn" :href="directionsUrl(selectedAddress, place)" target="_blank" rel="noopener" title="Directions"><Navigation :size="18" /></a>
+                  <a
+                    class="action-btn"
+                    :href="directionsUrl(selectedAddress, place, modeToDirectionsMode[transportMode] || 'driving')"
+                    target="_blank"
+                    rel="noopener"
+                    title="Directions"
+                  ><Navigation :size="18" /></a>
                   <a v-if="place.phone" class="action-btn" :href="`tel:${place.phone}`" title="Call">📞</a>
                   <a v-if="place.website" class="action-btn" :href="place.website" target="_blank" rel="noopener" title="Website">🌐</a>
                   <button class="action-btn menu-btn" @click="openMenu(place)"><Image :size="16" /></button>
+                  <button class="action-btn share-btn" @click="sharePlace(place)" title="Share">
+                    <Share2 :size="16" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -355,7 +488,7 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
         <p class="eyebrow">Live Traffic Intel</p>
         <h3>Get real-time insights into urban flows and optimal routes instantly.</h3>
       </div>
-      <button class="primary-button">Open Dashboard</button>
+      <button class="primary-button" disabled>Coming soon..</button>
     </section>
   </main>
 </template>

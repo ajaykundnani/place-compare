@@ -24,3 +24,13 @@ export function formatKm(value) {
   if (value < 1) return `${Math.round(value * 1000)} m`
   return `${value.toFixed(value < 10 ? 1 : 0)} km`
 }
+
+export function formatDuration(seconds) {
+  if (seconds == null || seconds <= 0) return ''
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.round((seconds % 3600) / 60)
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`
+  }
+  return `${minutes} min`
+}
