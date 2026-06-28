@@ -1343,14 +1343,63 @@ select:focus {
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
+.action-btn[title="Directions"] {
+  background: #3b82f6;
+  color: #fff;
+  border-color: transparent;
+}
+
+.action-btn[title="Directions"]:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.action-btn[title="Call"] {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: transparent;
+}
+
+.action-btn[title="Call"]:hover {
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  color: var(--accent);
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+
+.empty-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.empty-desc {
+  font-size: 0.9rem;
+  max-width: 360px;
+  line-height: 1.5;
+}
+
 .menu-btn {
   width: auto;
   padding: 0 14px;
   font-weight: 700;
   font-size: 0.85rem;
-  background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%);
-  color: #fff;
-  border-color: transparent;
+  gap: 6px;
+  background: #fff;
+  color: var(--text);
 }
 
 @media (max-width: 700px) {
@@ -1454,18 +1503,29 @@ select:focus {
 
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: center;
 }
 
 .feature-grid span {
-  align-items: start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
   border-radius: 12px;
-  background: #f6f9ff;
-  color: #476072;
-  padding: 10px;
+  background: transparent;
+  color: #5d6c7b;
+  padding: 0;
   font-size: 0.78rem;
   font-weight: 700;
+  transition: color 0.2s ease, transform 0.2s ease;
+  cursor: default;
+}
+
+.feature-grid span:hover {
+  color: var(--accent);
+  transform: scale(1.08);
 }
 
 .video-strip {

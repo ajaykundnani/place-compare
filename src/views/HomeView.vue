@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
-import { Loader2, Play, X } from 'lucide-vue-next'
+import { Image, Loader2, MapPin, Navigation, Play, Search, User, X } from 'lucide-vue-next'
 import AddressForm from '../components/address/AddressForm.vue'
 import AddressList from '../components/address/AddressList.vue'
 import FilterPanel from '../components/filters/FilterPanel.vue'
@@ -20,6 +20,7 @@ const {
   selectAddress,
 } = useAddressStore()
 const { sortedPlaces, isSearching, error, reviewFilter, query, search, clearResults } = usePlaceStore()
+const hasQuery = computed(() => !!query.value)
 
 const showForm = ref(false)
 const activeCategory = ref('All')
@@ -36,6 +37,11 @@ const filteredPlaces = computed(() => {
 
 const hasSelectedAddress = computed(() => !!selectedAddress.value)
 const hasResults = computed(() => sortedPlaces.value.length > 0)
+const selectedAddressLabel = computed(() => {
+  const address = selectedAddress.value
+  if (!address) return ''
+  return address.label || address.address || address.tag || 'your selected address'
+})
 
 function handleSave(address) {
   addAddress(address)
@@ -156,14 +162,10 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
       </div>
 
       <nav class="topnav">
-        <a href="#" class="topnav-link active">Home</a>
-        <a href="#" class="topnav-link">Saved</a>
-        <a href="#" class="topnav-link">Search</a>
-        <a href="#" class="topnav-link">Profile</a>
       </nav>
 
       <div class="profile-chip">
-        <span class="profile-icon">JD</span>
+        <span class="profile-icon"><User :size="18" /></span>
       </div>
     </header>
 
@@ -212,14 +214,17 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
           <AddressForm v-if="showForm" @save="handleSave" />
 
           <button class="add-destination" @click="showForm = !showForm">
-            {{ showForm ? '− Cancel' : '+ Add New Destination' }}
+            {{ showForm ? '− Cancel' : '+ Add New Address' }}
           </button>
         </div>
       </aside>
 
       <section class="places-panel">
         <div class="places-header">
-          <h2>Nearby Places</h2>
+          <h2>
+            Nearby Places
+            <span v-if="selectedAddressLabel"> from <span class="selected-address-title">{{ selectedAddressLabel }}</span></span>
+          </h2>
           <div class="category-pill-group">
             <button
               v-for="cat in categories"
@@ -267,10 +272,10 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                 <h3 class="result-card-name">{{ place.name }}</h3>
                 <p class="result-card-dist">{{ formatKm(place.distanceKm) }} away</p>
                 <div class="result-card-actions">
-                  <a class="action-btn" :href="directionsUrl(selectedAddress, place)" target="_blank" rel="noopener" title="Directions">📍</a>
+                  <a class="action-btn" :href="directionsUrl(selectedAddress, place)" target="_blank" rel="noopener" title="Directions"><Navigation :size="18" /></a>
                   <a v-if="place.phone" class="action-btn" :href="`tel:${place.phone}`" title="Call">📞</a>
                   <a v-if="place.website" class="action-btn" :href="place.website" target="_blank" rel="noopener" title="Website">🌐</a>
-                  <button class="action-btn menu-btn" @click="openMenu(place)">Menu</button>
+                  <button class="action-btn menu-btn" @click="openMenu(place)"><Image :size="16" /></button>
                 </div>
               </div>
             </div>
@@ -322,6 +327,19 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
           </Teleport>
         </template>
 
+        <div v-else class="empty-state">
+          <template v-if="hasQuery">
+            <Search :size="48" class="empty-icon" />
+            <h3 class="empty-title">No results found</h3>
+            <p class="empty-desc">We couldn't find any places matching "<strong>{{ query }}</strong>". Try a different search term.</p>
+          </template>
+          <template v-else>
+            <MapPin :size="48" class="empty-icon" />
+            <h3 class="empty-title">Explore nearby places</h3>
+            <p class="empty-desc">Select an address and search for restaurants, cafes, shops, and more in your area.</p>
+          </template>
+        </div>
+
         <div v-if="hasResults" class="explore-card">
           <div>
             <p class="explore-label">Explore More</p>
@@ -341,3 +359,18 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
     </section>
   </main>
 </template>
+
+<style scoped>
+.places-header h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.selected-address-title {
+  color: #2563eb;
+  font-weight: 700;
+}
+</style>

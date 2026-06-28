@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { Globe, Image, Navigation2, Phone, Play, Route, Star, Video, X, Loader2 } from 'lucide-vue-next'
+import { Globe, Image, ArrowUpRight, Phone, Play, Route, Star, Video, X } from 'lucide-vue-next'
 import { formatKm } from '../../utils/distance'
 import { directionsUrl } from '../../utils/maps'
 
@@ -9,23 +9,11 @@ const props = defineProps({
   origin: { type: Object, required: true },
 })
 
-const imageLoading = ref(false)
 const activeVideo = ref(null)
 
 const subtitle = computed(() => [props.place.type, props.place.category].filter(Boolean).join(' • '))
 
-const imageStatus = computed(() => {
-  if (imageLoading.value) return 'Loading image...'
-  return props.place.image ? 'Image found' : 'No image data'
-})
-
-const videoStatus = computed(() => {
-  if (props.place.videos?.length) {
-    if (props.place.videos[0]?.id) return `${props.place.videos.length} video${props.place.videos.length > 1 ? 's' : ''} found`
-    return 'Video preview available'
-  }
-  return 'No video data'
-})
+const activeVideo = ref(null)
 
 function openVideo(video) {
   activeVideo.value = video
@@ -39,8 +27,7 @@ function closeVideo() {
 <template>
   <article class="place-card">
     <div class="media-strip">
-      <img v-if="place.image && place.image.startsWith('http')" :src="place.image" :alt="place.name" loading="lazy" @loadstart="imageLoading = true" @load="imageLoading = false" @error="imageLoading = false" />
-      <div v-else-if="imageLoading" class="empty-media loading"><Loader2 :size="32" class="spin" />Fetching image...</div>
+      <img v-if="place.image && place.image.startsWith('http')" :src="place.image" :alt="place.name" loading="lazy" />
       <div v-else class="empty-media"><Image :size="32" />No image available</div>
       <div class="distance-pill">
         <Route :size="16" />
@@ -61,7 +48,7 @@ function closeVideo() {
           rel="noopener"
           aria-label="Get directions"
         >
-          <Navigation2 :size="18" />
+          <ArrowUpRight :size="20" />
         </a>
       </div>
 
@@ -92,9 +79,9 @@ function closeVideo() {
       </div>
 
       <div class="feature-grid">
-        <span><Image :size="16" /> {{ imageStatus }}</span>
-        <span><Video :size="16" /> {{ videoStatus }}</span>
-        <span><Star :size="16" /> Google reviews require Places API</span>
+        <span v-if="place.image" title="Image available"><Image :size="18" /></span>
+        <span v-if="place.videos?.length" title="Videos available"><Video :size="18" /></span>
+        <span title="Ratings"><Star :size="18" /></span>
       </div>
 
       <Teleport to="body">
