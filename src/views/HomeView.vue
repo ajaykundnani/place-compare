@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch, nextTick } from 'vue'
 import { Bike, Car, Clock, Image, Loader2, MapPin, Motorbike, Navigation, Pencil, Play, Search, Share2, Star, User, X } from 'lucide-vue-next'
 import AddressForm from '../components/address/AddressForm.vue'
 import AddressList from '../components/address/AddressList.vue'
@@ -44,6 +44,15 @@ const hasQuery = computed(() => !!query.value)
 
 const showForm = ref(false)
 const activeCategory = ref('All')
+const placesPanel = ref(null)
+
+watch(isSearching, (val) => {
+  if (!val && placesPanel.value) {
+    nextTick(() => {
+      placesPanel.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+})
 
 const categories = computed(() => {
   const types = new Set(sortedPlaces.value.map(p => p.type).filter(Boolean))
@@ -352,7 +361,7 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
         </div>
       </aside>
 
-      <section class="places-panel">
+      <section ref="placesPanel" class="places-panel">
         <div class="places-header">
           <h2>
             Nearby Places

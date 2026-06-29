@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Loader2, Search, X } from 'lucide-vue-next'
 import { autocompletePlaces } from '../../services/googleMaps'
 
@@ -12,6 +12,55 @@ const emit = defineEmits(['search', 'clear'])
 const term = ref('')
 const suggestions = ref([])
 const isSuggesting = ref(false)
+
+const placeholders = [
+  'Search nearby hospitals',
+  'Find cafes near me',
+  'Search PVR cinemas',
+  'Nearby restaurants',
+  'Search petrol pumps',
+  'Find ATMs nearby',
+]
+
+const placeholderText = ref('')
+let placeholderIndex = 0
+let charIndex = 0
+let isDeleting = false
+let typeTimer = null
+
+function runTypeAnimation() {
+  const current = placeholders[placeholderIndex]
+
+  if (!isDeleting) {
+    placeholderText.value = current.slice(0, charIndex + 1)
+    charIndex++
+    if (charIndex === current.length) {
+      isDeleting = true
+      typeTimer = setTimeout(runTypeAnimation, 3000)
+      return
+    }
+  } else {
+    placeholderText.value = current.slice(0, charIndex - 1)
+    charIndex--
+    if (charIndex === 0) {
+      isDeleting = false
+      placeholderIndex = (placeholderIndex + 1) % placeholders.length
+      typeTimer = setTimeout(runTypeAnimation, 800)
+      return
+    }
+  }
+
+  const delay = isDeleting ? 60 : 120
+  typeTimer = setTimeout(runTypeAnimation, delay)
+}
+
+onMounted(() => {
+  runTypeAnimation()
+})
+
+onUnmounted(() => {
+  if (typeTimer) clearTimeout(typeTimer)
+})
 
 const hasSuggestions = computed(() => suggestions.value.length > 0)
 
@@ -65,7 +114,7 @@ function clear() {
     <div class="search-input-wrap">
       <div class="search-input">
         <Search :size="20" />
-        <input v-model="term" :disabled="disabled" placeholder="Search hospitals, cafes, schools, malls..." @input="handleInput" />
+        <input v-model="term" :disabled="disabled" :placeholder="placeholderText" @input="handleInput" />
       </div>
 
       <div v-if="hasSuggestions" class="search-suggestions">

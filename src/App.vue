@@ -632,8 +632,31 @@ a {
     justify-content: center;
   }
 
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .topbar {
+    margin-bottom: 0;
+  }
+
   .content-grid {
-    grid-template-columns: 1fr;
+    display: contents;
+  }
+
+  .saved-panel {
+    order: 0;
+  }
+
+  .hero-panel {
+    order: 1;
+    margin-bottom: 0;
+  }
+
+  .places-panel {
+    order: 2;
   }
 
   .feature-cards {
@@ -2064,6 +2087,20 @@ select:focus {
   .address-card {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .places-header {
+    flex-wrap: wrap;
+  }
+
+  .transport-mode-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .fuel-price-info {
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .primary-button,
