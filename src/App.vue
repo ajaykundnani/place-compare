@@ -1332,6 +1332,23 @@ select:focus {
   font-size: 1.1rem;
   font-weight: 800;
   line-height: 1.2;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.card-weather-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #f0f9ff;
+  color: #0369a1;
+  line-height: 1.2;
 }
 
 
@@ -1422,6 +1439,130 @@ select:focus {
   font-weight: 600;
 }
 
+.fuel-price-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.fuel-price-value {
+  font-weight: 800;
+  color: #059669;
+}
+
+.fuel-price-updated {
+  color: #94a3b8;
+}
+
+.fuel-estimated {
+  font-style: italic;
+  color: #f59e0b;
+}
+
+.avg-badge {
+  font-weight: 700;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.avg-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 2px 6px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s ease;
+}
+
+.avg-edit-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  z-index: 2000;
+}
+
+.avg-modal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 380px;
+  width: 90%;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+}
+
+.avg-modal-title {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.avg-modal-desc {
+  margin: 0 0 20px;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.avg-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.avg-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+}
+
+.avg-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.avg-btn-cancel {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.avg-btn-save {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.avg-btn-save:hover {
+  filter: brightness(1.08);
+}
+
 .traffic-dot {
   display: inline-block;
   width: 10px;
@@ -1474,10 +1615,64 @@ select:focus {
   color: #94a3b8;
 }
 
+.result-card-petrol {
+  font-weight: 700;
+  color: #059669;
+}
+
 .result-card-traffic-duration {
   color: #ef4444;
   font-weight: 600;
   font-size: 0.82rem;
+}
+
+.weather-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+}
+
+.weather-bar.weather-loading {
+  color: var(--muted);
+  font-weight: 600;
+  gap: 6px;
+}
+
+.weather-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.weather-temp {
+  font-weight: 800;
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+.weather-label {
+  color: #475569;
+  font-weight: 600;
+}
+
+.weather-feels {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.result-card-parking {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.result-card-parking.parking-yes {
+  color: #059669;
 }
 
 .result-card-hours {
@@ -1493,6 +1688,8 @@ select:focus {
 .result-card-hours.closed-now {
   color: #dc2626;
 }
+
+
 
 .share-btn {
   background: #f0f9ff;

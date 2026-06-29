@@ -61,11 +61,13 @@ async function searchYouTubeAPI(query) {
     const response = await fetch(`${YOUTUBE_SEARCH_API}?${params.toString()}`);
 
     if (!response.ok) {
+      const body = await response.json().catch(() => null)
       if (response.status === 403) {
-        console.warn("YouTube API: quota exceeded or invalid key");
+        console.warn("YouTube API 403:", body?.error?.message || "quota exceeded or invalid key");
         videoCache.set(cacheKey, []);
         return [];
       }
+      console.error("YouTube API error:", response.status, body?.error?.message || "");
       throw new Error(`YouTube API returned ${response.status}`);
     }
 

@@ -1,9 +1,12 @@
 import { computed, ref } from "vue";
+import { loadItem, saveItem } from "../services/storage";
 import { searchPlaces, routeDistanceKm as googleRouteDistanceKm } from "../services/googleMaps";
 import { routeDistanceKm as osrmRouteDistanceKm } from "../services/osrm";
 import { haversineKm } from "../utils/distance";
 import { fetchPlaceImage } from "../services/imageService";
 import { fetchPlaceVideos } from "../services/videoService";
+import { fetchWeather } from "../services/weather";
+import { calcFuelCost, resolveFuelPriceLive } from "../services/petrolPrice";
 
 const places = ref([]);
 const isSearching = ref(false);
@@ -12,6 +15,19 @@ const query = ref("");
 const reviewFilter = ref("all");
 const transportMode = ref("car");
 const isRecalculating = ref(false);
+const weather = ref(null);
+const isFetchingWeather = ref(false);
+const fuelCurrency = ref(null);
+const fuelFetchedAt = ref(null);
+const vehicleAvg = ref(loadItem('vehicle-avg', { car: 20, bike: 40 }));
+const promptedModes = ref(loadItem('prompted-modes', {}));
+
+const parkingLikelyTypes = new Set([
+  'shopping_mall', 'airport', 'supermarket', 'hospital', 'stadium',
+  'parking', 'movie_theater', 'convention_center',
+  'train_station', 'bus_station', 'subway_station',
+  'amusement_park', 'marina', 'casino',
+])
 
 function getTrafficLevel(durationSeconds, durationInTrafficSeconds) {
   if (!durationInTrafficSeconds || !durationSeconds) return null
@@ -19,6 +35,16 @@ function getTrafficLevel(durationSeconds, durationInTrafficSeconds) {
   if (ratio > 1.4) return "high"
   if (ratio > 1.15) return "moderate"
   return "low"
+}
+
+function getParkingStatus(place, mode) {
+  if (mode === 'bike' || mode === 'cycle') {
+    return { available: true, text: 'Parking available' }
+  }
+  if (place.type && parkingLikelyTypes.has(place.type)) {
+    return { available: true, text: 'Parking likely' }
+  }
+  return { available: false, text: 'Parking unknown' }
 }
 
 const modeToGoogleTravel = { car: "DRIVING", bike: "DRIVING", cycle: "BICYCLING" }
@@ -81,6 +107,12 @@ export function usePlaceStore() {
 
     try {
       const found = await searchPlaces(queryText, { origin })
+      const fuelInfo = await resolveFuelPriceLive(origin.address || origin.displayName || '')
+      fuelCurrency.value = fuelInfo.fuelPrice != null
+        ? { currency: fuelInfo.currency, code: fuelInfo.code, fuelPrice: fuelInfo.fuelPrice, country: fuelInfo.country, source: fuelInfo.source }
+        : null
+      fuelFetchedAt.value = fuelInfo.lastUpdated || Date.now()
+      const fuelPrice = fuelInfo.fuelPrice
       places.value = await Promise.all(
         found.map(async (place) => {
           const routeData = await getRouteDistance(origin, place, transportMode.value).catch(() => null)
@@ -90,9 +122,17 @@ export function usePlaceStore() {
             durationSeconds: routeData?.durationSeconds ?? null,
             trafficLevel: routeData?.trafficLevel ?? null,
             durationInTrafficSeconds: routeData?.durationInTrafficSeconds ?? null,
+            parking: getParkingStatus(place, transportMode.value),
+            fuelCost: calcFuelCost(routeData?.distanceKm ?? haversineKm(origin, place), fuelPrice, vehicleAvg.value[transportMode.value] || 20),
           }
         }),
       )
+
+      isFetchingWeather.value = true
+      fetchWeather(origin.lat, origin.lon).then((w) => {
+        weather.value = w
+        isFetchingWeather.value = false
+      })
 
       places.value.slice(0, 3).forEach((place, index) => {
         fetchPlaceImage(place).then((image) => {
@@ -135,6 +175,12 @@ export function usePlaceStore() {
     if (!origin || !places.value.length) return
     isRecalculating.value = true
     try {
+      const fuelInfo = await resolveFuelPriceLive(origin.address || origin.displayName || '')
+      fuelCurrency.value = fuelInfo.fuelPrice != null
+        ? { currency: fuelInfo.currency, code: fuelInfo.code, fuelPrice: fuelInfo.fuelPrice, country: fuelInfo.country, source: fuelInfo.source }
+        : null
+      fuelFetchedAt.value = fuelInfo.lastUpdated || Date.now()
+      const fuelPrice = fuelInfo.fuelPrice
       places.value = await Promise.all(
         places.value.map(async (place) => {
           const routeData = await getRouteDistance(origin, place, transportMode.value).catch(() => null)
@@ -144,6 +190,8 @@ export function usePlaceStore() {
             durationSeconds: routeData?.durationSeconds ?? null,
             trafficLevel: routeData?.trafficLevel ?? null,
             durationInTrafficSeconds: routeData?.durationInTrafficSeconds ?? null,
+            parking: getParkingStatus(place, transportMode.value),
+            fuelCost: calcFuelCost(routeData?.distanceKm ?? haversineKm(origin, place), fuelPrice, vehicleAvg.value[transportMode.value] || 20),
           }
         }),
       )
@@ -158,6 +206,19 @@ export function usePlaceStore() {
     places.value = []
     query.value = ""
     error.value = ""
+    weather.value = null
+    fuelCurrency.value = null
+    fuelFetchedAt.value = null
+  }
+
+  function setVehicleAvg(val, mode) {
+    const avg = Number(val)
+    if (avg > 0 && avg < 100) {
+      vehicleAvg.value = { ...vehicleAvg.value, [mode]: avg }
+      saveItem('vehicle-avg', vehicleAvg.value)
+      promptedModes.value = { ...promptedModes.value, [mode]: true }
+      saveItem('prompted-modes', promptedModes.value)
+    }
   }
 
   return {
@@ -169,11 +230,19 @@ export function usePlaceStore() {
     query,
     reviewFilter,
     transportMode,
+    weather,
+    isFetchingWeather,
+    fuelCurrency,
+    fuelFetchedAt,
+    vehicleAvg,
+    promptedModes,
+    setVehicleAvg,
     search,
     clearResults,
     recalculateDistances,
     modeToGoogleTravel,
     modeToOsrmProfile,
     modeToDirectionsMode,
+    getParkingStatus,
   }
 }

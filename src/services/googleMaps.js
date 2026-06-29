@@ -32,7 +32,11 @@ function requireKey() {
 
 function normalizePlace(result) {
   const photo = result.photos?.[0]
-  const hours = result.opening_hours
+  const hoursRaw = result.opening_hours
+  const hours = hoursRaw ? {
+    periods: hoursRaw.periods,
+    weekday_text: hoursRaw.weekday_text,
+  } : null
   return {
     id: `google-${result.place_id}`,
     name: result.name || 'Unnamed place',
@@ -45,8 +49,8 @@ function normalizePlace(result) {
     website: result.website || '',
     googleMapsUrl: result.url || '',
     image: photo ? photo.getUrl({ maxWidth: 400 }) : '',
-    openNow: hours?.open_now ?? null,
-    openingHours: hours || null,
+    openNow: null,
+    openingHours: hours,
     rating: result.rating || null,
     reviews: [],
     videos: [],
@@ -142,8 +146,19 @@ export async function searchPlaces(query, { limit = 12, origin = null } = {}) {
           place.website = details.website || ''
           place.googleMapsUrl = details.url || ''
           if (details.opening_hours) {
-            place.openNow = details.opening_hours.open_now ?? null
-            place.openingHours = details.opening_hours
+            try {
+              place.openNow = typeof details.isOpen === 'function'
+                ? details.isOpen()
+                : typeof details.opening_hours.isOpen === 'function'
+                  ? details.opening_hours.isOpen()
+                  : null
+            } catch {
+              place.openNow = null
+            }
+            place.openingHours = {
+              periods: details.opening_hours.periods,
+              weekday_text: details.opening_hours.weekday_text,
+            }
           }
         }
       } catch (_) {}

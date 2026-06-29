@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
-import { Bike, Car, Clock, Image, Loader2, MapPin, Motorbike, Navigation, Play, Search, Share2, Star, User, X } from 'lucide-vue-next'
+import { Bike, Car, Clock, Image, Loader2, MapPin, Motorbike, Navigation, Pencil, Play, Search, Share2, Star, User, X } from 'lucide-vue-next'
 import AddressForm from '../components/address/AddressForm.vue'
 import AddressList from '../components/address/AddressList.vue'
 import FilterPanel from '../components/filters/FilterPanel.vue'
@@ -10,6 +10,8 @@ import { usePlaceStore } from '../stores/placeStore'
 import { fetchPlacePhotos } from '../services/googleMaps'
 import { formatKm, formatDuration } from '../utils/distance'
 import { directionsUrl } from '../utils/maps'
+import { getWeatherInfo } from '../services/weather'
+
 
 const {
   addresses,
@@ -26,6 +28,13 @@ const {
   error,
   query,
   transportMode,
+  weather,
+  isFetchingWeather,
+  fuelCurrency,
+  fuelFetchedAt,
+  vehicleAvg,
+  promptedModes,
+  setVehicleAvg,
   search,
   clearResults,
   recalculateDistances,
@@ -150,6 +159,8 @@ function nextMenuPhoto() {
   activeMenuPhotoIndex.value = (activeMenuPhotoIndex.value + 1) % menuPhotos.value.length
 }
 
+
+
 function trafficLabel(place) {
   if (place.trafficLevel === 'high') return 'Heavy traffic'
   if (place.trafficLevel === 'moderate') return 'Moderate traffic'
@@ -171,13 +182,31 @@ function openStatus(place) {
   if (!hours) return null
   const today = new Date().getDay()
   const todayPeriod = hours.periods?.find(p => p.open?.day === today)
-  if (hours.open_now) {
-    if (todayPeriod?.close) {
+  if (!todayPeriod) return null
+
+  let isOpen = place.openNow
+  if (isOpen == null && todayPeriod) {
+    const now = new Date()
+    const totalMinutes = now.getHours() * 60 + now.getMinutes()
+    const openTime = parseInt(todayPeriod.open.time.substring(0, 2)) * 60 + parseInt(todayPeriod.open.time.substring(2))
+    if (todayPeriod.close) {
+      const closeTime = parseInt(todayPeriod.close.time.substring(0, 2)) * 60 + parseInt(todayPeriod.close.time.substring(2))
+      isOpen = closeTime > openTime
+        ? totalMinutes >= openTime && totalMinutes < closeTime
+        : totalMinutes >= openTime || totalMinutes < closeTime
+    } else {
+      isOpen = totalMinutes >= openTime
+    }
+  }
+  if (isOpen == null) return null
+
+  if (isOpen) {
+    if (todayPeriod.close) {
       return { label: `Open till ${formatOpenTime(todayPeriod.close.time)}`, cls: 'open-now' }
     }
     return null
   }
-  if (todayPeriod?.close) {
+  if (todayPeriod.close) {
     return { label: 'Closed now', cls: 'closed-now' }
   }
   if (hours.periods?.length) {
@@ -220,9 +249,31 @@ async function sharePlace(place) {
   }
 }
 
-watch(transportMode, () => {
+function openAvgPrompt() {
+  avgInput.value = vehicleAvg.value[transportMode.value] || 20
+  showAvgModal.value = true
+}
+
+function saveAvg() {
+  const val = Number(avgInput.value)
+  if (val > 0 && val <= 99) {
+    setVehicleAvg(val, transportMode.value)
+    showAvgModal.value = false
+    if (selectedAddress.value && query.value) {
+      recalculateDistances(selectedAddress.value)
+    }
+  }
+}
+
+const showAvgModal = ref(false)
+const avgInput = ref(20)
+
+watch(transportMode, (mode) => {
   if (selectedAddress.value && query.value) {
     recalculateDistances(selectedAddress.value)
+  }
+  if (!promptedModes.value[mode] && mode !== 'cycle') {
+    openAvgPrompt()
   }
 })
 
@@ -341,6 +392,15 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
           <span v-if="isRecalculating" class="recalc-indicator">
             <Loader2 :size="14" class="spin" /> Updating...
           </span>
+          <span v-if="fuelCurrency && !isRecalculating && transportMode !== 'cycle'" class="fuel-price-info">
+            <span class="fuel-price-value">⛽ {{ fuelCurrency.currency }}{{ fuelCurrency.fuelPrice }}/L</span>
+            <span v-if="fuelCurrency.source === 'live'" class="fuel-price-updated">Live · {{ new Date(fuelFetchedAt).toLocaleDateString() }}</span>
+            <span v-else class="fuel-price-updated fuel-estimated">Estimated</span>
+            <span class="avg-badge">Avg: {{ vehicleAvg[transportMode] || 20 }} km/L</span>
+            <button class="avg-edit-btn" title="Change vehicle efficiency" @click="openAvgPrompt">
+              <Pencil :size="12" />
+            </button>
+          </span>
         </div>
 
         <p v-if="error" class="error">{{ error }}</p>
@@ -372,7 +432,12 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                     {{ place.rating.toFixed(1) }}
                   </span>
                 </div>
-                <h3 class="result-card-name">{{ place.name }}</h3>
+                <h3 class="result-card-name">
+                  {{ place.name }}
+                  <span v-if="weather" class="card-weather-tag" :title="getWeatherInfo(weather.weatherCode).label">
+                    {{ getWeatherInfo(weather.weatherCode).icon }} {{ weather.temperature }}°
+                  </span>
+                </h3>
                 <p class="result-card-dist">
                   <span
                     class="traffic-dot"
@@ -391,6 +456,13 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                       {{ formatDuration(place.durationInTrafficSeconds || place.durationSeconds) }}
                     </span>
                   </template>
+                  <span v-if="place.fuelCost && fuelCurrency && transportMode !== 'cycle'" class="result-card-petrol">
+                    <span class="result-card-duration-sep">·</span>
+                    ⛽ {{ fuelCurrency.currency }}{{ place.fuelCost.toFixed(0) }}
+                  </span>
+                </p>
+                <p v-if="place.parking?.available" class="result-card-parking parking-yes">
+                  🅿️ {{ place.parking.text }}
                 </p>
                 <p v-if="openStatus(place)" class="result-card-hours" :class="openStatus(place).cls">
                   {{ openStatus(place).label }}
@@ -406,6 +478,7 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                   <a v-if="place.phone" class="action-btn" :href="`tel:${place.phone}`" title="Call">📞</a>
                   <a v-if="place.website" class="action-btn" :href="place.website" target="_blank" rel="noopener" title="Website">🌐</a>
                   <button class="action-btn menu-btn" @click="openMenu(place)"><Image :size="16" /></button>
+
                   <button class="action-btn share-btn" @click="sharePlace(place)" title="Share">
                     <Share2 :size="16" />
                   </button>
@@ -457,6 +530,8 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                 </div>
               </div>
             </div>
+
+
           </Teleport>
         </template>
 
@@ -491,6 +566,29 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
       <button class="primary-button" disabled>Coming soon..</button>
     </section>
   </main>
+
+  <Teleport to="body">
+    <div v-if="showAvgModal" class="modal-overlay" @click.self="showAvgModal = false">
+      <div class="avg-modal">
+        <h3 class="avg-modal-title">{{ transportMode === 'car' ? 'Car' : 'Bike' }} Efficiency</h3>
+        <p class="avg-modal-desc">Enter your {{ transportMode === 'car' ? "car" : "bike" }}'s average (km/L) to calculate fuel costs accurately.</p>
+        <input
+          v-model="avgInput"
+          type="number"
+          min="1"
+          max="99"
+          step="1"
+          class="avg-input"
+          placeholder="e.g. 20"
+          @keyup.enter="saveAvg"
+        />
+        <div class="avg-modal-actions">
+          <button class="avg-btn-cancel" @click="showAvgModal = false">Cancel</button>
+          <button class="avg-btn-save" @click="saveAvg">Save</button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
