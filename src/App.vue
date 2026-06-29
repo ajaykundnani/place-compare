@@ -1,9 +1,11 @@
 <script setup>
 import HomeView from './views/HomeView.vue'
+import PwaInstallBanner from './components/pwa/PwaInstallBanner.vue'
 </script>
 
 <template>
   <HomeView />
+  <PwaInstallBanner />
 </template>
 
 <style>
