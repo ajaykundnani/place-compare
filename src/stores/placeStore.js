@@ -6,7 +6,7 @@ import { haversineKm } from "../utils/distance";
 import { fetchPlaceImage } from "../services/imageService";
 import { fetchPlaceVideos } from "../services/videoService";
 import { fetchWeather } from "../services/weather";
-import { calcFuelCost, resolveFuelPriceLive } from "../services/petrolPrice";
+import { calcFuelCost, resolveFuelPriceLive, FUEL_TYPES } from "../services/petrolPrice";
 
 const places = ref([]);
 const isSearching = ref(false);
@@ -19,6 +19,7 @@ const weather = ref(null);
 const isFetchingWeather = ref(false);
 const fuelCurrency = ref(null);
 const fuelFetchedAt = ref(null);
+const fuelType = ref('petrol');
 const vehicleAvg = ref(loadItem('vehicle-avg', { car: 20, bike: 40 }));
 const promptedModes = ref(loadItem('prompted-modes', {}));
 
@@ -94,6 +95,11 @@ export function usePlaceStore() {
     [...places.value].sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity)),
   )
 
+  const activeFuelPrice = computed(() => {
+    if (!fuelCurrency.value) return null
+    return fuelCurrency.value[fuelType.value] ?? null
+  })
+
   async function search(queryText, origin) {
     if (!queryText.trim()) return
     if (!origin) {
@@ -108,11 +114,20 @@ export function usePlaceStore() {
     try {
       const found = await searchPlaces(queryText, { origin })
       const fuelInfo = await resolveFuelPriceLive(origin.address || origin.displayName || '')
-      fuelCurrency.value = fuelInfo.fuelPrice != null
-        ? { currency: fuelInfo.currency, code: fuelInfo.code, fuelPrice: fuelInfo.fuelPrice, country: fuelInfo.country, source: fuelInfo.source }
+      const hasFuel = fuelInfo.petrol != null
+      fuelCurrency.value = hasFuel
+        ? {
+            currency: fuelInfo.currency,
+            code: fuelInfo.code,
+            petrol: fuelInfo.petrol,
+            diesel: fuelInfo.diesel,
+            cng: fuelInfo.cng,
+            country: fuelInfo.country,
+            source: fuelInfo.source,
+          }
         : null
       fuelFetchedAt.value = fuelInfo.lastUpdated || Date.now()
-      const fuelPrice = fuelInfo.fuelPrice
+      const activePrice = fuelCurrency.value?.[fuelType.value] ?? null
       places.value = await Promise.all(
         found.map(async (place) => {
           const routeData = await getRouteDistance(origin, place, transportMode.value).catch(() => null)
@@ -123,7 +138,7 @@ export function usePlaceStore() {
             trafficLevel: routeData?.trafficLevel ?? null,
             durationInTrafficSeconds: routeData?.durationInTrafficSeconds ?? null,
             parking: getParkingStatus(place, transportMode.value),
-            fuelCost: calcFuelCost(routeData?.distanceKm ?? haversineKm(origin, place), fuelPrice, vehicleAvg.value[transportMode.value] || 20),
+            fuelCost: calcFuelCost(routeData?.distanceKm ?? haversineKm(origin, place), activePrice, vehicleAvg.value[transportMode.value] || 20),
           }
         }),
       )
@@ -176,11 +191,20 @@ export function usePlaceStore() {
     isRecalculating.value = true
     try {
       const fuelInfo = await resolveFuelPriceLive(origin.address || origin.displayName || '')
-      fuelCurrency.value = fuelInfo.fuelPrice != null
-        ? { currency: fuelInfo.currency, code: fuelInfo.code, fuelPrice: fuelInfo.fuelPrice, country: fuelInfo.country, source: fuelInfo.source }
+      const hasFuel = fuelInfo.petrol != null
+      fuelCurrency.value = hasFuel
+        ? {
+            currency: fuelInfo.currency,
+            code: fuelInfo.code,
+            petrol: fuelInfo.petrol,
+            diesel: fuelInfo.diesel,
+            cng: fuelInfo.cng,
+            country: fuelInfo.country,
+            source: fuelInfo.source,
+          }
         : null
       fuelFetchedAt.value = fuelInfo.lastUpdated || Date.now()
-      const fuelPrice = fuelInfo.fuelPrice
+      const activePrice = fuelCurrency.value?.[fuelType.value] ?? null
       places.value = await Promise.all(
         places.value.map(async (place) => {
           const routeData = await getRouteDistance(origin, place, transportMode.value).catch(() => null)
@@ -191,7 +215,7 @@ export function usePlaceStore() {
             trafficLevel: routeData?.trafficLevel ?? null,
             durationInTrafficSeconds: routeData?.durationInTrafficSeconds ?? null,
             parking: getParkingStatus(place, transportMode.value),
-            fuelCost: calcFuelCost(routeData?.distanceKm ?? haversineKm(origin, place), fuelPrice, vehicleAvg.value[transportMode.value] || 20),
+            fuelCost: calcFuelCost(routeData?.distanceKm ?? haversineKm(origin, place), activePrice, vehicleAvg.value[transportMode.value] || 20),
           }
         }),
       )
@@ -202,6 +226,18 @@ export function usePlaceStore() {
     }
   }
 
+  function setFuelType(type) {
+    if (!FUEL_TYPES.includes(type)) return
+    fuelType.value = type
+    const price = fuelCurrency.value?.[type]
+    if (price != null && places.value.length) {
+      places.value = places.value.map(p => ({
+        ...p,
+        fuelCost: calcFuelCost(p.distanceKm, price, vehicleAvg.value[transportMode.value] || 20),
+      }))
+    }
+  }
+
   function clearResults() {
     places.value = []
     query.value = ""
@@ -209,6 +245,7 @@ export function usePlaceStore() {
     weather.value = null
     fuelCurrency.value = null
     fuelFetchedAt.value = null
+    fuelType.value = 'petrol'
   }
 
   function setVehicleAvg(val, mode) {
@@ -234,9 +271,12 @@ export function usePlaceStore() {
     isFetchingWeather,
     fuelCurrency,
     fuelFetchedAt,
+    fuelType,
+    activeFuelPrice,
     vehicleAvg,
     promptedModes,
     setVehicleAvg,
+    setFuelType,
     search,
     clearResults,
     recalculateDistances,

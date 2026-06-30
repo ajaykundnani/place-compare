@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch, nextTick } from 'vue'
-import { Bike, Car, Clock, Image, Loader2, MapPin, Motorbike, Navigation, Pencil, Play, Search, Share2, Star, User, X } from 'lucide-vue-next'
+import { Bike, Car, Clock, Image, Loader2, MapPin, MessageSquare, Motorbike, Navigation, Pencil, Play, Search, Share2, Star, User, X } from 'lucide-vue-next'
 import AddressForm from '../components/address/AddressForm.vue'
 import AddressList from '../components/address/AddressList.vue'
 import FilterPanel from '../components/filters/FilterPanel.vue'
@@ -32,9 +32,12 @@ const {
   isFetchingWeather,
   fuelCurrency,
   fuelFetchedAt,
+  fuelType,
+  activeFuelPrice,
   vehicleAvg,
   promptedModes,
   setVehicleAvg,
+  setFuelType,
   search,
   clearResults,
   recalculateDistances,
@@ -45,6 +48,7 @@ const hasQuery = computed(() => !!query.value)
 const showForm = ref(false)
 const activeCategory = ref('All')
 const placesPanel = ref(null)
+const brandIconSrc = `${import.meta.env.BASE_URL}NearLio-PWA.png`
 
 watch(isSearching, (val) => {
   if (!val && placesPanel.value) {
@@ -138,6 +142,22 @@ const showMenuGallery = ref(false)
 const menuPhotos = ref([])
 const activeMenuPhotoIndex = ref(0)
 let menuLoadingPlaceId = null
+
+const showReviewsModal = ref(false)
+const activeReviews = ref([])
+const activePlaceName = ref('')
+
+function openReviews(place) {
+  activeReviews.value = place.reviews || []
+  activePlaceName.value = place.name
+  showReviewsModal.value = true
+}
+
+function closeReviews() {
+  showReviewsModal.value = false
+  activeReviews.value = []
+  activePlaceName.value = ''
+}
 
 async function openMenu(place) {
   if (menuLoadingPlaceId === place.id) return
@@ -296,7 +316,7 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
   <main class="app-shell">
     <header class="topbar">
       <div class="brand-row">
-        <div class="brand-mark">N</div>
+        <img class="brand-mark" :src="brandIconSrc" alt="NearLio" />
         <div>
           <strong class="brand-name">NearLio</strong>
           <p class="brand-subtitle">Precision navigation for modern urban travel.</p>
@@ -401,15 +421,25 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
           <span v-if="isRecalculating" class="recalc-indicator">
             <Loader2 :size="14" class="spin" /> Updating...
           </span>
-          <span v-if="fuelCurrency && !isRecalculating && transportMode !== 'cycle'" class="fuel-price-info">
-            <span class="fuel-price-value">⛽ {{ fuelCurrency.currency }}{{ fuelCurrency.fuelPrice }}/L</span>
-            <span v-if="fuelCurrency.source === 'live'" class="fuel-price-updated">Live · {{ new Date(fuelFetchedAt).toLocaleDateString() }}</span>
-            <span v-else class="fuel-price-updated fuel-estimated">Estimated</span>
+          <div v-if="fuelCurrency && !isRecalculating && transportMode !== 'cycle'" class="fuel-price-info">
+            <div class="fuel-type-group">
+              <button
+                v-for="ft in ['petrol', 'diesel', 'cng']"
+                :key="ft"
+                class="fuel-type-btn"
+                :class="{ active: fuelType === ft }"
+                @click="setFuelType(ft)"
+              >
+                {{ ft === 'petrol' ? '⛽' : ft === 'diesel' ? '🛢️' : '🔵' }} {{ ft.charAt(0).toUpperCase() + ft.slice(1) }}
+              </button>
+            </div>
+            <span class="fuel-price-value">{{ fuelCurrency.currency }}{{ activeFuelPrice }}/L</span>
+            <span class="fuel-price-source" :class="{ 'fuel-estimated': fuelCurrency.source !== 'live' }">{{ fuelCurrency.source === 'live' ? 'Live' : 'Estimated' }}</span>
             <span class="avg-badge">Avg: {{ vehicleAvg[transportMode] || 20 }} km/L</span>
             <button class="avg-edit-btn" title="Change vehicle efficiency" @click="openAvgPrompt">
               <Pencil :size="12" />
             </button>
-          </span>
+          </div>
         </div>
 
         <p v-if="error" class="error">{{ error }}</p>
@@ -468,6 +498,7 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                   <span v-if="place.fuelCost && fuelCurrency && transportMode !== 'cycle'" class="result-card-petrol">
                     <span class="result-card-duration-sep">·</span>
                     ⛽ {{ fuelCurrency.currency }}{{ place.fuelCost.toFixed(0) }}
+                    <span class="fuel-cost-type">({{ fuelType }})</span>
                   </span>
                 </p>
                 <p v-if="place.parking?.available" class="result-card-parking parking-yes">
@@ -487,7 +518,9 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                   <a v-if="place.phone" class="action-btn" :href="`tel:${place.phone}`" title="Call">📞</a>
                   <a v-if="place.website" class="action-btn" :href="place.website" target="_blank" rel="noopener" title="Website">🌐</a>
                   <button class="action-btn menu-btn" @click="openMenu(place)"><Image :size="16" /></button>
-
+                  <button v-if="place.reviews?.length" class="action-btn review-btn" @click="openReviews(place)" title="Reviews">
+                    <MessageSquare :size="16" />
+                  </button>
                   <button class="action-btn share-btn" @click="sharePlace(place)" title="Share">
                     <Share2 :size="16" />
                   </button>
@@ -540,6 +573,40 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
               </div>
             </div>
 
+            <div v-if="showReviewsModal" class="reviews-modal-backdrop" @click.self="closeReviews">
+              <div class="reviews-modal">
+                <button class="reviews-modal-close" @click="closeReviews" aria-label="Close reviews">
+                  <X :size="20" />
+                </button>
+                <h3 class="reviews-modal-title">Reviews for {{ activePlaceName }}</h3>
+                <div v-if="activeReviews.length" class="reviews-list">
+                  <div v-for="(review, ri) in activeReviews" :key="ri" class="review-item">
+                    <div class="review-header">
+                      <img
+                        v-if="review.profilePhotoUrl"
+                        :src="review.profilePhotoUrl"
+                        class="review-avatar"
+                        alt=""
+                        referrerpolicy="no-referrer"
+                      />
+                      <div v-else class="review-avatar review-avatar-fallback">
+                        {{ review.authorName.charAt(0).toUpperCase() }}
+                      </div>
+                      <div class="review-author-info">
+                        <strong class="review-author-name">{{ review.authorName }}</strong>
+                        <span class="review-time">{{ review.relativeTime || review.time }}</span>
+                      </div>
+                      <span class="review-rating">
+                        <Star :size="12" class="rating-star-icon" />
+                        {{ review.rating }}
+                      </span>
+                    </div>
+                    <p v-if="review.text" class="review-text">{{ review.text }}</p>
+                  </div>
+                </div>
+                <p v-else class="reviews-empty">No reviews available.</p>
+              </div>
+            </div>
 
           </Teleport>
         </template>

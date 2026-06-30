@@ -87,14 +87,10 @@ a {
 }
 
 .brand-mark {
-  display: grid;
-  place-items: center;
   width: 42px;
   height: 42px;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--accent), #3b82f6);
-  color: white;
-  font-weight: 800;
+  object-fit: cover;
 }
 
 .brand-name {
@@ -659,6 +655,10 @@ a {
 
   .places-panel {
     order: 2;
+  }
+
+  .traffic-banner {
+    order: 3;
   }
 
   .feature-cards {
@@ -1418,8 +1418,9 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   padding: 12px 4px;
+  flex-wrap: wrap;
 }
 
 .transport-mode-group {
@@ -1465,7 +1466,7 @@ select:focus {
 }
 
 .fuel-price-info {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 10px;
   font-size: 0.82rem;
@@ -1477,13 +1478,53 @@ select:focus {
   color: #059669;
 }
 
-.fuel-price-updated {
+.fuel-price-source {
   color: #94a3b8;
 }
 
 .fuel-estimated {
   font-style: italic;
   color: #f59e0b;
+}
+
+.fuel-type-group {
+  display: inline-flex;
+  gap: 3px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.fuel-type-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #475569;
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.fuel-type-btn:hover {
+  color: var(--text);
+}
+
+.fuel-type-btn.active {
+  background: #fff;
+  color: var(--accent);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+.fuel-cost-type {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 600;
 }
 
 .avg-badge {
@@ -1775,6 +1816,154 @@ select:focus {
   gap: 6px;
   background: #fff;
   color: var(--text);
+}
+
+.review-btn {
+  color: #8b5cf6;
+}
+
+.review-btn:hover {
+  background: #f5f3ff;
+  border-color: #8b5cf6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   REVIEWS MODAL
+   ═══════════════════════════════════════════════════════════════════ */
+.reviews-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: rgba(2, 6, 23, 0.74);
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+.reviews-modal {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 24px;
+  padding: 28px 24px 20px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+.reviews-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s;
+  z-index: 1;
+}
+
+.reviews-modal-close:hover {
+  background: #e2e8f0;
+}
+
+.reviews-modal-title {
+  margin: 0 0 20px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  padding-right: 32px;
+  flex-shrink: 0;
+}
+
+.reviews-list {
+  overflow-y: auto;
+  display: grid;
+  gap: 16px;
+  padding-right: 4px;
+}
+
+.review-item {
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.review-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.review-avatar-fallback {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.review-author-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.review-author-name {
+  display: block;
+  font-size: 0.85rem;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.review-time {
+  display: block;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.review-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.review-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.reviews-empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 40px 0;
+  margin: 0;
 }
 
 @media (max-width: 700px) {
@@ -2073,6 +2262,36 @@ select:focus {
     padding: 14px 12px 40px;
   }
 
+  .topbar {
+    padding: 12px 14px;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  .brand-row {
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .brand-name {
+    font-size: 0.92rem;
+  }
+
+  .brand-subtitle {
+    font-size: 0.75rem;
+    margin: 1px 0 0;
+  }
+
+  .profile-chip {
+    display: none;
+  }
+
   .hero {
     min-height: 320px;
     padding: 24px 18px;
@@ -2105,6 +2324,10 @@ select:focus {
     gap: 6px;
   }
 
+  .fuel-type-group {
+    flex-wrap: wrap;
+  }
+
   .primary-button,
   .ghost-button,
   .candidate-button {
@@ -2122,6 +2345,23 @@ select:focus {
   .rating {
     max-width: none;
     width: fit-content;
+  }
+
+  .reviews-modal {
+    max-width: none;
+    width: 100%;
+    max-height: 90vh;
+    padding: 24px 16px 16px;
+    border-radius: 20px;
+  }
+
+  .reviews-modal-title {
+    font-size: 0.95rem;
+    margin-bottom: 16px;
+  }
+
+  .review-item {
+    padding: 12px;
   }
 }
 </style>

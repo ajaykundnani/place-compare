@@ -134,7 +134,7 @@ export async function searchPlaces(query, { limit = 12, origin = null } = {}) {
       try {
         const details = await new Promise((resolve, reject) => {
           service.getDetails(
-            { placeId, fields: ['formatted_phone_number', 'website', 'url', 'opening_hours'] },
+            { placeId, fields: ['formatted_phone_number', 'website', 'url', 'opening_hours', 'rating', 'reviews'] },
             (result, status) => {
               if (status === 'OK' && result) resolve(result)
               else resolve(null)
@@ -145,6 +145,18 @@ export async function searchPlaces(query, { limit = 12, origin = null } = {}) {
           place.phone = details.formatted_phone_number || ''
           place.website = details.website || ''
           place.googleMapsUrl = details.url || ''
+          if (details.rating) place.rating = details.rating
+          if (details.reviews?.length) {
+            place.reviews = details.reviews.map(r => ({
+              authorName: r.author_name || 'Anonymous',
+              authorUrl: r.author_url || '',
+              profilePhotoUrl: r.profile_photo_url || '',
+              rating: r.rating || 0,
+              text: r.text || '',
+              time: r.time ? new Date(r.time * 1000).toLocaleDateString() : '',
+              relativeTime: r.relative_time_description || '',
+            }))
+          }
           if (details.opening_hours) {
             try {
               place.openNow = typeof details.isOpen === 'function'
