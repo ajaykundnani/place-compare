@@ -1828,12 +1828,12 @@ select:focus {
 }
 
 .vid-btn {
-  color: #dc2626;
+  color: #ff0000;
 }
 
 .vid-btn:hover {
-  background: #fef2f2;
-  border-color: #dc2626;
+  background: #fff0f0;
+  border-color: #ff0000;
 }
 
 .video-arrow {
