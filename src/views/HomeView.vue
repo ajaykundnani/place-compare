@@ -102,30 +102,72 @@ function handleSearch(queryText) {
 }
 
 const activeVideo = ref(null)
+const activeVideoList = ref([])
+const activeVideoIndex = ref(0)
 const cardVideoIdx = reactive({})
 
 function openVideo(video) {
   activeVideo.value = video
 }
 
+function openVideoList(place) {
+  activeVideoList.value = place.videos || []
+  activeVideoIndex.value = getVidIdx(place)
+  if (activeVideoList.value.length) {
+    activeVideo.value = activeVideoList.value[activeVideoIndex.value]
+  }
+}
+
 function closeVideo() {
   activeVideo.value = null
+  activeVideoList.value = []
+  activeVideoIndex.value = 0
 }
 
 function getVidIdx(place) {
   return cardVideoIdx[place.id] || 0
 }
 
-function prevVid(place) {
-  const v = place.videos
-  if (!v?.length) return
-  cardVideoIdx[place.id] = (getVidIdx(place) - 1 + v.length) % v.length
+function prevVideo() {
+  if (activeVideoList.value.length < 2) return
+  activeVideoIndex.value = (activeVideoIndex.value - 1 + activeVideoList.value.length) % activeVideoList.value.length
+  activeVideo.value = activeVideoList.value[activeVideoIndex.value]
 }
 
-function nextVid(place) {
-  const v = place.videos
-  if (!v?.length) return
-  cardVideoIdx[place.id] = (getVidIdx(place) + 1) % v.length
+function nextVideo() {
+  if (activeVideoList.value.length < 2) return
+  activeVideoIndex.value = (activeVideoIndex.value + 1) % activeVideoList.value.length
+  activeVideo.value = activeVideoList.value[activeVideoIndex.value]
+}
+
+/* ── Touch swipe (video modal) ────────────────────────────────── */
+let videoTouchX = 0
+
+function onTouchStart(e) {
+  videoTouchX = e.changedTouches[0].screenX
+}
+
+function onTouchEnd(e) {
+  const diff = videoTouchX - e.changedTouches[0].screenX
+  if (Math.abs(diff) > 50) {
+    if (diff > 0) nextVideo()
+    else prevVideo()
+  }
+}
+
+/* ── Touch swipe (photo gallery) ─────────────────────────────── */
+let galleryTouchX = 0
+
+function onGalleryTouchStart(e) {
+  galleryTouchX = e.changedTouches[0].screenX
+}
+
+function onGalleryTouchEnd(e) {
+  const diff = galleryTouchX - e.changedTouches[0].screenX
+  if (Math.abs(diff) > 50) {
+    if (diff > 0) nextMenuPhoto()
+    else prevMenuPhoto()
+  }
 }
 
 function cardBgStyle(place) {
@@ -454,14 +496,7 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
             <div v-for="place in filteredPlaces" :key="place.id" class="result-card">
               <div class="result-card-media">
                 <div class="result-card-bg" :style="cardBgStyle(place)"></div>
-                <template v-if="place.videos?.length">
-                  <button class="media-play-overlay" @click="openVideo(place.videos[getVidIdx(place)])" aria-label="Play video">
-                    <Play :size="28" />
-                  </button>
-                  <button v-if="place.videos.length > 1" class="carousel-arrow prev" @click.stop="prevVid(place)" aria-label="Previous video">‹</button>
-                  <button v-if="place.videos.length > 1" class="carousel-arrow next" @click.stop="nextVid(place)" aria-label="Next video">›</button>
-                  <span class="media-counter">{{ getVidIdx(place) + 1 }} / {{ place.videos.length }}</span>
-                </template>
+
               </div>
               <div class="result-card-body">
                 <div class="result-card-type-row">
@@ -517,6 +552,9 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                   ><Navigation :size="18" /></a>
                   <a v-if="place.phone" class="action-btn" :href="`tel:${place.phone}`" title="Call">📞</a>
                   <a v-if="place.website" class="action-btn" :href="place.website" target="_blank" rel="noopener" title="Website">🌐</a>
+                  <button v-if="place.videos?.some(v => v.id)" class="action-btn vid-btn" @click="openVideoList(place)" title="Videos">
+                    <Play :size="16" />
+                  </button>
                   <button class="action-btn menu-btn" @click="openMenu(place)"><Image :size="16" /></button>
                   <button v-if="place.reviews?.length" class="action-btn review-btn" @click="openReviews(place)" title="Reviews">
                     <MessageSquare :size="16" />
@@ -531,21 +569,35 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
 
           <Teleport to="body">
             <div v-if="activeVideo" class="video-modal-backdrop" @click.self="closeVideo">
-              <div class="video-modal">
+              <div
+                class="video-modal"
+                @touchstart.passive="onTouchStart"
+                @touchend.passive="onTouchEnd"
+              >
                 <button class="video-modal-close" @click="closeVideo" aria-label="Close video">
                   <X :size="20" />
                 </button>
                 <iframe
+                  :key="activeVideoIndex"
                   :src="activeVideo.embedUrl"
                   :title="activeVideo.title"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowfullscreen
                 />
+                <template v-if="activeVideoList.length > 1">
+                  <button class="carousel-arrow prev video-arrow" @click.stop="prevVideo" aria-label="Previous video">‹</button>
+                  <button class="carousel-arrow next video-arrow" @click.stop="nextVideo" aria-label="Next video">›</button>
+                  <span class="media-counter video-counter">{{ activeVideoIndex + 1 }} / {{ activeVideoList.length }}</span>
+                </template>
               </div>
             </div>
 
             <div v-if="showMenuGallery" class="video-modal-backdrop" @click.self="closeMenu">
-              <div class="menu-gallery">
+              <div
+                class="menu-gallery"
+                @touchstart.passive="onGalleryTouchStart"
+                @touchend.passive="onGalleryTouchEnd"
+              >
                 <button class="video-modal-close" @click="closeMenu" aria-label="Close gallery">
                   <X :size="20" />
                 </button>

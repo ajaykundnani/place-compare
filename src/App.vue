@@ -1827,6 +1827,27 @@ select:focus {
   border-color: #8b5cf6;
 }
 
+.vid-btn {
+  color: #dc2626;
+}
+
+.vid-btn:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+}
+
+.video-arrow {
+  z-index: 12;
+}
+
+.video-counter {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 12;
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    REVIEWS MODAL
    ═══════════════════════════════════════════════════════════════════ */

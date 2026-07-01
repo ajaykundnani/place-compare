@@ -7,7 +7,6 @@ const emit = defineEmits(['save'])
 
 const form = reactive({
   tag: 'Home',
-  label: '',
   address: '',
 })
 
@@ -17,7 +16,7 @@ const isSuggesting = ref(false)
 const hasSuggestions = computed(() => suggestions.value.length > 0)
 
 function emitAddress(place, sourceLabel = '') {
-  const label = form.label || form.address.split(',')[0] || form.tag
+  const label = place.displayName?.split(',')[0] || form.address.split(',')[0] || form.tag
 
   emit('save', {
     tag: form.tag,
@@ -30,7 +29,6 @@ function emitAddress(place, sourceLabel = '') {
   })
 
   form.address = ''
-  form.label = ''
   suggestions.value = []
 }
 
@@ -62,7 +60,7 @@ function handleAddressInput() {
   }
   suggestionTimer = setTimeout(() => {
     loadSuggestions(form.address)
-  }, 250)
+  }, 400)
 }
 
 function chooseSuggestion(suggestion) {
@@ -90,11 +88,6 @@ function chooseSuggestion(suggestion) {
         {{ tag }}
       </button>
     </div>
-
-    <label>
-      Name
-      <input v-model="form.label" placeholder="My flat, office, parents house" />
-    </label>
 
     <label>
       Society / Building / Address

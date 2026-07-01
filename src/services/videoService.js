@@ -90,16 +90,6 @@ async function searchYouTubeAPI(query) {
   }
 }
 
-function buildYouTubeSearchEmbed(query) {
-  const safeQuery = encodeURIComponent(query);
-  return {
-    id: null,
-    title: `Search: ${query}`,
-    thumbnail: null,
-    embedUrl: `https://www.youtube.com/embed?listType=search&list=${safeQuery}`,
-  };
-}
-
 export async function fetchPlaceVideos(place) {
   if (!place) return [];
 
@@ -114,6 +104,7 @@ export async function fetchPlaceVideos(place) {
           thumbnail: null,
           embedUrl: url,
         }))
+        .filter(v => v.id)
     : [];
 
   if (existingVideos.length) return existingVideos;
@@ -128,10 +119,10 @@ export async function fetchPlaceVideos(place) {
 
   if (API_KEY) {
     const videos = await searchYouTubeAPI(query);
-    if (videos.length) return videos;
+    return videos.filter(v => v.id);
   }
 
-  return [buildYouTubeSearchEmbed(query)];
+  return [];
 }
 
 export async function fetchPlacesVideos(places) {
