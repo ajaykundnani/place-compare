@@ -107,6 +107,7 @@ function chooseSuggestion(suggestion) {
         class="candidate-button"
         type="button"
         @click="chooseSuggestion(suggestion)"
+        :aria-label="`Select address: ${suggestion.name}`"
       >
         <span>
           <strong>{{ suggestion.name }}</strong>

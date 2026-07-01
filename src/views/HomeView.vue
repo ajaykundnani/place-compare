@@ -45,6 +45,13 @@ const {
 } = usePlaceStore()
 const hasQuery = computed(() => !!query.value)
 
+/* ── Dynamic page title based on search query ─────────────────── */
+watch(query, (val) => {
+  document.title = val
+    ? `${val} - NearLio | Find Nearby Places & Local Services`
+    : 'NearLio – Find Nearby Places, Fuel Prices, Toll Information & Local Services'
+}, { immediate: true })
+
 const showForm = ref(false)
 const activeCategory = ref('All')
 const placesPanel = ref(null)
@@ -339,6 +346,11 @@ function saveAvg() {
 const showAvgModal = ref(false)
 const avgInput = ref(20)
 
+watch([activeVideo, showMenuGallery, showReviewsModal, showAvgModal], () => {
+  const open = activeVideo.value || showMenuGallery.value || showReviewsModal.value || showAvgModal.value
+  document.body.style.overflow = open ? 'hidden' : ''
+})
+
 watch(transportMode, (mode) => {
   if (selectedAddress.value && query.value) {
     recalculateDistances(selectedAddress.value)
@@ -358,7 +370,7 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
   <main class="app-shell">
     <header class="topbar">
       <div class="brand-row">
-        <img class="brand-mark" :src="brandIconSrc" alt="NearLio" />
+        <img class="brand-mark" :src="brandIconSrc" alt="NearLio" loading="lazy" />
         <div>
           <strong class="brand-name">NearLio</strong>
           <p class="brand-subtitle">Precision navigation for modern urban travel.</p>
@@ -557,11 +569,11 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                       <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                     </svg>
                   </button>
-                  <button class="action-btn menu-btn" @click="openMenu(place)"><Image :size="16" /></button>
+                  <button class="action-btn menu-btn" @click="openMenu(place)" aria-label="View photos"><Image :size="16" /></button>
                   <button v-if="place.reviews?.length" class="action-btn review-btn" @click="openReviews(place)" title="Reviews">
                     <MessageSquare :size="16" />
                   </button>
-                  <button class="action-btn share-btn" @click="sharePlace(place)" title="Share">
+                  <button class="action-btn share-btn" @click="sharePlace(place)" aria-label="Share this place">
                     <Share2 :size="16" />
                   </button>
                 </div>
@@ -605,7 +617,7 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                 </button>
 
                 <div class="menu-gallery-image">
-                  <img :src="menuPhotos[activeMenuPhotoIndex]" alt="Place photo" />
+                  <img :src="menuPhotos[activeMenuPhotoIndex]" alt="" loading="lazy" />
                 </div>
 
                 <button
@@ -640,8 +652,9 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                         v-if="review.profilePhotoUrl"
                         :src="review.profilePhotoUrl"
                         class="review-avatar"
-                        alt=""
+                        :alt="`${review.authorName}'s profile photo`"
                         referrerpolicy="no-referrer"
+                        loading="lazy"
                       />
                       <div v-else class="review-avatar review-avatar-fallback">
                         {{ review.authorName.charAt(0).toUpperCase() }}

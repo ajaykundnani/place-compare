@@ -124,6 +124,7 @@ function clear() {
           type="button"
           class="suggestion-item"
           @click="chooseSuggestion(suggestion.name)"
+          :aria-label="`Search for ${suggestion.name}`"
         >
           <strong>{{ suggestion.name }}</strong>
           <small>{{ suggestion.displayName }}</small>
@@ -131,12 +132,12 @@ function clear() {
       </div>
     </div>
 
-    <button class="primary-button" type="submit" :disabled="disabled || loading || !term.trim()">
+    <button class="primary-button" type="submit" :disabled="disabled || loading || !term.trim()" aria-label="Search places">
       <Loader2 v-if="loading" class="spin" :size="18" />
       <Search v-else :size="18" />
       Search
     </button>
-    <button class="ghost-button" type="button" @click="clear">
+    <button class="ghost-button" type="button" @click="clear" aria-label="Clear search">
       <X :size="18" />
       Clear
     </button>
