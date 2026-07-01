@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ajaykundnani.github.io/place-compare/sitemap.xml
