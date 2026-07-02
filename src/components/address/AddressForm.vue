@@ -1,7 +1,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { Check, Home, Tag } from 'lucide-vue-next'
-import { findAddressCandidates } from '../../services/googleMaps'
+import { autocompletePlaces, findAddressCandidates } from '../../services/googleMaps'
 
 const emit = defineEmits(['save'])
 
@@ -15,8 +15,18 @@ const isSuggesting = ref(false)
 
 const hasSuggestions = computed(() => suggestions.value.length > 0)
 
+async function resolveLatLon(displayName) {
+  try {
+    const results = await findAddressCandidates(displayName, { limit: 1 })
+    if (results.length) {
+      return { lat: results[0].lat, lon: results[0].lon, accuracy: results[0].isApproximate ? 'Approximate match' : 'Confirmed match' }
+    }
+  } catch {}
+  return { lat: 0, lon: 0, accuracy: 'Approximate match' }
+}
+
 function emitAddress(place, sourceLabel = '') {
-  const label = place.displayName?.split(',')[0] || form.address.split(',')[0] || form.tag
+  const label = place.name || form.address.split(',')[0] || form.tag
 
   emit('save', {
     tag: form.tag,
@@ -24,15 +34,13 @@ function emitAddress(place, sourceLabel = '') {
     address: place.displayName || form.address,
     lat: place.lat,
     lon: place.lon,
-    accuracy: place.isApproximate ? 'Approximate match' : 'Confirmed match',
-    source: sourceLabel || place.source || 'Manual',
+    accuracy: place.accuracy || 'Confirmed match',
+    source: sourceLabel || place.source || 'Autocomplete',
   })
 
   form.address = ''
   suggestions.value = []
 }
-
-let suggestionTimer = null
 
 async function loadSuggestions(query) {
   if (!query.trim()) {
@@ -43,7 +51,7 @@ async function loadSuggestions(query) {
 
   isSuggesting.value = true
   try {
-    const matches = await findAddressCandidates(query, { limit: 5 })
+    const matches = await autocompletePlaces(query, 5)
     suggestions.value = matches
   } catch (err) {
     suggestions.value = []
@@ -53,18 +61,16 @@ async function loadSuggestions(query) {
 }
 
 function handleAddressInput() {
-  if (suggestionTimer) clearTimeout(suggestionTimer)
   if (form.address.trim().length < 3) {
     suggestions.value = []
     return
   }
-  suggestionTimer = setTimeout(() => {
-    loadSuggestions(form.address)
-  }, 400)
+  loadSuggestions(form.address)
 }
 
-function chooseSuggestion(suggestion) {
-  emitAddress(suggestion, 'Address selected')
+async function chooseSuggestion(suggestion) {
+  const coords = await resolveLatLon(suggestion.displayName)
+  emitAddress({ ...suggestion, ...coords }, 'Address selected')
 }
 </script>
 
