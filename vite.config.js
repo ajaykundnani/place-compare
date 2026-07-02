@@ -13,7 +13,7 @@ export default defineConfig({
     vueDevTools(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico"],
+      includeAssets: ["NearLio-PWA.png"],
       devOptions: {
         enabled: true,
       },
@@ -46,6 +46,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/nominatim\.openstreetmap\.org\/.*/i,
