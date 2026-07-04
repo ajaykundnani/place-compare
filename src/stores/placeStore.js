@@ -22,6 +22,8 @@ const fuelFetchedAt = ref(null);
 const fuelType = ref('petrol');
 const nextPageToken = ref(null);
 const isLoadingMore = ref(false);
+const currentPage = ref(1);
+const perPage = 6;
 const vehicleAvg = ref(loadItem('vehicle-avg', { car: 20, bike: 40 }));
 const promptedModes = ref(loadItem('prompted-modes', {}));
 
@@ -112,6 +114,7 @@ export function usePlaceStore() {
     isSearching.value = true
     error.value = ""
     query.value = queryText
+    currentPage.value = 1
 
     try {
       const { places: found, nextPageToken: token } = await searchPlaces(queryText, { origin })
@@ -267,6 +270,19 @@ export function usePlaceStore() {
     }
   }
 
+  function totalPages(total) {
+    return Math.max(1, Math.ceil((total || 0) / perPage))
+  }
+
+  function goToPage(page, origin, filteredCount) {
+    const max = totalPages(filteredCount)
+    const p = Math.max(1, Math.min(page, max))
+    currentPage.value = p
+    if (p === max && nextPageToken.value && !isLoadingMore.value && origin) {
+      loadMore(origin)
+    }
+  }
+
   function clearResults() {
     places.value = []
     query.value = ""
@@ -276,6 +292,7 @@ export function usePlaceStore() {
     fuelFetchedAt.value = null
     fuelType.value = 'petrol'
     nextPageToken.value = null
+    currentPage.value = 1
   }
 
   function setVehicleAvg(val, mode) {
@@ -309,6 +326,10 @@ export function usePlaceStore() {
     setFuelType,
     nextPageToken,
     isLoadingMore,
+    currentPage,
+    perPage,
+    totalPages,
+    goToPage,
     loadMore,
     search,
     clearResults,

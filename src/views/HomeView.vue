@@ -40,7 +40,10 @@ const {
   setFuelType,
   nextPageToken,
   isLoadingMore,
-  loadMore,
+  currentPage,
+  perPage,
+  totalPages,
+  goToPage,
   search,
   clearResults,
   recalculateDistances,
@@ -76,6 +79,11 @@ const categories = computed(() => {
 const filteredPlaces = computed(() => {
   if (activeCategory.value === 'All') return sortedPlaces.value
   return sortedPlaces.value.filter(p => p.type === activeCategory.value)
+})
+
+const displayedPlaces = computed(() => {
+  const start = (currentPage.value - 1) * perPage
+  return filteredPlaces.value.slice(start, start + perPage)
 })
 
 const hasSelectedAddress = computed(() => !!selectedAddress.value)
@@ -563,7 +571,7 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
 
         <template v-else-if="hasResults">
           <div class="place-grid">
-            <div v-for="place in filteredPlaces" :key="place.id" class="result-card">
+            <div v-for="place in displayedPlaces" :key="place.id" class="result-card">
               <div class="result-card-media">
                 <div class="result-card-bg" :style="cardBgStyle(place)"></div>
 
@@ -637,15 +645,17 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                 </div>
               </div>
             </div>
-            <div v-if="nextPageToken" class="pagination-bar">
-              <button
-                class="primary-button load-more-btn"
-                :disabled="isLoadingMore"
-                @click="loadMore(selectedAddress)"
-              >
-                <Loader2 v-if="isLoadingMore" class="spin" :size="18" />
-                <template v-else>{{ isLoadingMore ? 'Loading...' : 'Load More' }}</template>
-              </button>
+            <div v-if="filteredPlaces.length > perPage" class="pagination-bar">
+              <div class="pagination-pages">
+                <button
+                  v-for="p in totalPages(filteredPlaces.length)"
+                  :key="p"
+                  class="page-btn"
+                  :class="{ active: p === currentPage }"
+                  @click="goToPage(p, selectedAddress, filteredPlaces.length); placesPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                >{{ p }}</button>
+              </div>
+              <p v-if="isLoadingMore" class="pagination-hint">Loading more...</p>
             </div>
           </div>
 

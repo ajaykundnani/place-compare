@@ -1690,13 +1690,51 @@ select:focus {
 
 .pagination-bar {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   padding: 24px 0 8px;
 }
 
-.load-more-btn {
-  min-width: 180px;
+.pagination-pages {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
   justify-content: center;
+}
+
+.page-btn {
+  min-width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dce7f1;
+  border-radius: 10px;
+  background: #fff;
+  color: #475569;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0 8px;
+}
+
+.page-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.page-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.pagination-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #94a3b8;
 }
 
 .avg-badge {
