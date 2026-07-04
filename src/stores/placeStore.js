@@ -1,6 +1,6 @@
 import { computed, ref } from "vue";
 import { loadItem, saveItem } from "../services/storage";
-import { searchPlaces, routeDistanceKm as googleRouteDistanceKm } from "../services/googleMaps";
+import { searchPlaces, searchPlacesMore, routeDistanceKm as googleRouteDistanceKm } from "../services/googleMaps";
 import { routeDistanceKm as osrmRouteDistanceKm } from "../services/osrm";
 import { haversineKm } from "../utils/distance";
 import { fetchPlaceImage } from "../services/imageService";
@@ -20,6 +20,8 @@ const isFetchingWeather = ref(false);
 const fuelCurrency = ref(null);
 const fuelFetchedAt = ref(null);
 const fuelType = ref('petrol');
+const nextPageToken = ref(null);
+const isLoadingMore = ref(false);
 const vehicleAvg = ref(loadItem('vehicle-avg', { car: 20, bike: 40 }));
 const promptedModes = ref(loadItem('prompted-modes', {}));
 
@@ -112,7 +114,8 @@ export function usePlaceStore() {
     query.value = queryText
 
     try {
-      const found = await searchPlaces(queryText, { origin })
+      const { places: found, nextPageToken: token } = await searchPlaces(queryText, { origin })
+      nextPageToken.value = token
       const fuelInfo = await resolveFuelPriceLive(origin.address || origin.displayName || '')
       const hasFuel = fuelInfo.petrol != null
       fuelCurrency.value = hasFuel
@@ -238,6 +241,32 @@ export function usePlaceStore() {
     }
   }
 
+  async function loadMore(origin) {
+    if (!nextPageToken.value || isLoadingMore.value || !origin) return
+    isLoadingMore.value = true
+    try {
+      const { places: more, nextPageToken: token } = await searchPlacesMore(null, nextPageToken.value)
+      nextPageToken.value = token
+      if (more.length) {
+        const fuelPrice = fuelCurrency.value?.[fuelType.value] ?? null
+        const enriched = more.map(place => ({
+          ...place,
+          distanceKm: haversineKm(origin, place),
+          durationSeconds: null,
+          trafficLevel: null,
+          durationInTrafficSeconds: null,
+          parking: getParkingStatus(place, transportMode.value),
+          fuelCost: calcFuelCost(haversineKm(origin, place), fuelPrice, vehicleAvg.value[transportMode.value] || 20),
+        }))
+        places.value = [...places.value, ...enriched]
+      }
+    } catch {
+      // keep existing results
+    } finally {
+      isLoadingMore.value = false
+    }
+  }
+
   function clearResults() {
     places.value = []
     query.value = ""
@@ -246,6 +275,7 @@ export function usePlaceStore() {
     fuelCurrency.value = null
     fuelFetchedAt.value = null
     fuelType.value = 'petrol'
+    nextPageToken.value = null
   }
 
   function setVehicleAvg(val, mode) {
@@ -277,6 +307,9 @@ export function usePlaceStore() {
     promptedModes,
     setVehicleAvg,
     setFuelType,
+    nextPageToken,
+    isLoadingMore,
+    loadMore,
     search,
     clearResults,
     recalculateDistances,

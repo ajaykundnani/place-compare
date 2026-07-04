@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch, nextTick } from 'vue'
-import { Bike, Car, Clock, Image, Loader2, MapPin, MessageSquare, Motorbike, Navigation, Pencil, Play, Search, Share2, Star, User, X } from 'lucide-vue-next'
+import { Bike, Car, Clock, Image, Loader2, MapPin, MessageSquare, Motorbike, Navigation, Pencil, Play, Search, Share2, Star, User, X, Sparkles } from 'lucide-vue-next'
 import AddressForm from '../components/address/AddressForm.vue'
 import AddressList from '../components/address/AddressList.vue'
 import FilterPanel from '../components/filters/FilterPanel.vue'
@@ -38,6 +38,9 @@ const {
   promptedModes,
   setVehicleAvg,
   setFuelType,
+  nextPageToken,
+  isLoadingMore,
+  loadMore,
   search,
   clearResults,
   recalculateDistances,
@@ -346,6 +349,52 @@ function saveAvg() {
 const showAvgModal = ref(false)
 const avgInput = ref(20)
 
+/* ── Demo mode (Lio bottom-right guide) ───────────────────────── */
+const showDemo = ref(false)
+const demoStep = ref(0)
+const demoBubble = ref('')
+
+function startDemo() {
+  showDemo.value = true
+  demoStep.value = 1
+  demoBubble.value = 'Hello! My name is Lio! 👋'
+
+  setTimeout(() => {
+    demoStep.value = 2
+    demoBubble.value = 'Let me add an address for you...'
+    addAddress({
+      tag: 'Home',
+      label: 'Nana Chiloda',
+      address: 'Nana Chiloda, Ahmedabad, Gujarat, India',
+      lat: 23.0819,
+      lon: 72.6282,
+      accuracy: 'Confirmed match',
+      source: 'Demo',
+    })
+
+    setTimeout(() => {
+      demoStep.value = 3
+      demoBubble.value = 'Now searching Cafes near me... 🔍'
+      const origin = selectedAddress.value || addresses.value[0]
+      if (origin) search('Cafes near me', origin)
+
+      setTimeout(() => {
+        demoStep.value = 4
+        demoBubble.value = 'Here are your results! 🎉'
+        if (placesPanel.value) {
+          placesPanel.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+
+        setTimeout(() => {
+          showDemo.value = false
+          demoStep.value = 0
+          demoBubble.value = ''
+        }, 3500)
+      }, 3500)
+    }, 3000)
+  }, 3500)
+}
+
 watch([activeVideo, showMenuGallery, showReviewsModal, showAvgModal], () => {
   const open = activeVideo.value || showMenuGallery.value || showReviewsModal.value || showAvgModal.value
   document.body.style.overflow = open ? 'hidden' : ''
@@ -361,7 +410,11 @@ watch(transportMode, (mode) => {
 })
 
 watch(selectedAddress, (nextAddress, previousAddress) => {
-  if (!nextAddress || !query.value || nextAddress === previousAddress) return
+  if (!nextAddress) {
+    if (query.value) clearResults()
+    return
+  }
+  if (!query.value || nextAddress === previousAddress) return
   search(query.value, nextAddress)
 })
 </script>
@@ -379,6 +432,11 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
 
       <nav class="topnav">
       </nav>
+
+      <button class="demo-link" @click="startDemo" :disabled="showDemo" aria-label="Show demo">
+        <Sparkles :size="16" />
+        <span>Show Demo</span>
+      </button>
 
       <div class="profile-chip">
         <span class="profile-icon"><User :size="18" /></span>
@@ -579,6 +637,16 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
                 </div>
               </div>
             </div>
+            <div v-if="nextPageToken" class="pagination-bar">
+              <button
+                class="primary-button load-more-btn"
+                :disabled="isLoadingMore"
+                @click="loadMore(selectedAddress)"
+              >
+                <Loader2 v-if="isLoadingMore" class="spin" :size="18" />
+                <template v-else>{{ isLoadingMore ? 'Loading...' : 'Load More' }}</template>
+              </button>
+            </div>
           </div>
 
           <Teleport to="body">
@@ -676,6 +744,71 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
             </div>
 
           </Teleport>
+
+          <Teleport v-if="showDemo" to="body">
+            <div class="demo-backdrop" @click.self="showDemo = false; demoStep = 0">
+              <div class="lio-guide">
+                <div class="lio-avatar">
+                  <svg viewBox="0 0 140 160" width="72" height="82" fill="none">
+                    <!-- Body -->
+                    <rect x="45" y="80" width="50" height="45" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+                    <!-- Left arm -->
+                    <rect x="18" y="84" width="28" height="12" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" transform="rotate(12, 32, 90)" />
+                    <!-- Left hand -->
+                    <circle cx="20" cy="90" r="7" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+                    <!-- Right arm -->
+                    <rect x="94" y="84" width="28" height="12" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" transform="rotate(-12, 108, 90)" />
+                    <!-- Right hand -->
+                    <circle cx="120" cy="90" r="7" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+                    <!-- Left leg -->
+                    <rect x="52" y="123" width="14" height="24" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+                    <!-- Left foot -->
+                    <ellipse cx="59" cy="148" rx="11" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+                    <!-- Right leg -->
+                    <rect x="74" y="123" width="14" height="24" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+                    <!-- Right foot -->
+                    <ellipse cx="81" cy="148" rx="11" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+                    <!-- Head -->
+                    <circle cx="70" cy="50" r="38" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+                    <!-- Left eye white -->
+                    <ellipse cx="58" cy="46" rx="8" ry="9" fill="#fff" stroke="#cbd5e1" stroke-width="1.5" />
+                    <!-- Right eye white -->
+                    <ellipse cx="82" cy="46" rx="8" ry="9" fill="#fff" stroke="#cbd5e1" stroke-width="1.5" />
+                    <!-- Left iris (blue) -->
+                    <circle cx="59" cy="47" r="5" fill="#3b82f6" />
+                    <!-- Right iris (blue) -->
+                    <circle cx="83" cy="47" r="5" fill="#3b82f6" />
+                    <!-- Left pupil -->
+                    <circle cx="60" cy="46" r="2" fill="#1e293b" />
+                    <!-- Right pupil -->
+                    <circle cx="84" cy="46" r="2" fill="#1e293b" />
+                    <!-- Eye shine left -->
+                    <circle cx="57" cy="44" r="1.5" fill="#fff" />
+                    <!-- Eye shine right -->
+                    <circle cx="81" cy="44" r="1.5" fill="#fff" />
+                    <!-- Eyebrows -->
+                    <path d="M49 36 Q58 32 67 36" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" fill="none" />
+                    <path d="M73 36 Q82 32 91 36" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" fill="none" />
+                    <!-- Rosy cheeks -->
+                    <ellipse cx="42" cy="58" rx="7" ry="4" fill="#fecaca" opacity="0.5" />
+                    <ellipse cx="98" cy="58" rx="7" ry="4" fill="#fecaca" opacity="0.5" />
+                    <!-- Smile -->
+                    <path d="M56 62 Q70 74 84 62" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" fill="none" />
+                    <!-- Nose -->
+                    <ellipse cx="70" cy="56" rx="2" ry="3" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="0.8" />
+                  </svg>
+                  <span class="lio-name">Lio</span>
+                </div>
+                <div class="lio-bubble">
+                  <p>{{ demoBubble }}</p>
+                  <div v-if="demoStep < 4" class="lio-typing">
+                    <span></span><span></span><span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Teleport>
+
         </template>
 
         <div v-else class="empty-state">

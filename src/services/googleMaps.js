@@ -102,33 +102,8 @@ export async function autocompletePlaces(input, limit = 5) {
   })
 }
 
-export async function searchPlaces(query, { limit = 12, origin = null } = {}) {
-  requireKey()
-  if (!query.trim()) return []
-
-  const maps = await loadMaps()
-  const service = new maps.places.PlacesService(placesDiv)
-
-  const request = {
-    query,
-  }
-
-  if (origin) {
-    request.location = new maps.LatLng(origin.lat, origin.lon)
-    request.radius = 50000
-  }
-
-  const results = await new Promise((resolve, reject) => {
-    service.textSearch(request, (res, status) => {
-      if (status === 'ZERO_RESULTS') resolve([])
-      else if (status !== 'OK') reject(new Error(`Places API error: ${status}`))
-      else resolve(res || [])
-    })
-  })
-
-  const places = results.slice(0, limit).map(normalizePlace)
-
-  const enriched = await Promise.all(
+async function enrichPlaces(places, service) {
+  return Promise.all(
     places.map(async (place) => {
       const placeId = place.id.replace('google-', '')
       try {
@@ -177,8 +152,51 @@ export async function searchPlaces(query, { limit = 12, origin = null } = {}) {
       return place
     }),
   )
+}
 
-  return enriched
+export async function searchPlaces(query, { origin = null } = {}) {
+  requireKey()
+  if (!query.trim()) return []
+
+  const maps = await loadMaps()
+  const service = new maps.places.PlacesService(placesDiv)
+
+  const request = { query }
+  if (origin) {
+    request.location = new maps.LatLng(origin.lat, origin.lon)
+    request.radius = 50000
+  }
+
+  const res = await new Promise((resolve, reject) => {
+    service.textSearch(request, (results, status, pagination) => {
+      if (status === 'ZERO_RESULTS') resolve({ places: [], nextPageToken: null })
+      else if (status !== 'OK') reject(new Error(`Places API error: ${status}`))
+      else resolve({ places: results || [], nextPageToken: pagination?.nextPageToken || null })
+    })
+  })
+
+  const places = res.places.map(normalizePlace)
+  return { places: await enrichPlaces(places, service), nextPageToken: res.nextPageToken }
+}
+
+export async function searchPlacesMore(service, nextPageToken) {
+  if (!nextPageToken) return { places: [], nextPageToken: null }
+
+  const maps = await loadMaps()
+  if (!service) service = new maps.places.PlacesService(placesDiv)
+
+  await new Promise(r => setTimeout(r, 2000))
+
+  const res = await new Promise((resolve, reject) => {
+    service.textSearch({ nextPageToken }, (results, status, pagination) => {
+      if (status === 'ZERO_RESULTS') resolve({ places: [], nextPageToken: null })
+      else if (status !== 'OK') reject(new Error(`Places API error: ${status}`))
+      else resolve({ places: results || [], nextPageToken: pagination?.nextPageToken || null })
+    })
+  })
+
+  const places = res.places.map(normalizePlace)
+  return { places: await enrichPlaces(places, service), nextPageToken: res.nextPageToken }
 }
 
 export async function findAddressCandidates(query, { context = '', limit = 8 } = {}) {
