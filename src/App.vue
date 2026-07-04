@@ -169,12 +169,6 @@ a {
   z-index: 2147483646;
   background: rgba(2, 6, 23, 0.55);
   backdrop-filter: blur(3px);
-  animation: demo-fade-in 0.15s ease;
-}
-
-@keyframes demo-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 .lio-guide {
@@ -186,18 +180,7 @@ a {
   gap: 14px;
   top: 50%;
   left: 50%;
-  animation: lio-enter-center 1.2s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-}
-
-@keyframes lio-enter-center {
-  0% {
-    opacity: 0;
-    transform: translate(calc(-50% + 350px), calc(-50% + 250px)) scale(0.4);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
+  transform: translate(-50%, -50%);
 }
 
 .lio-bubble {
@@ -207,12 +190,6 @@ a {
   background: #fff;
   border-radius: 20px;
   box-shadow: 0 12px 48px rgba(2, 6, 23, 0.18);
-  animation: bubble-in 0.5s ease 0.6s both;
-}
-
-@keyframes bubble-in {
-  from { opacity: 0; transform: translateY(16px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .lio-bubble::after {
@@ -288,18 +265,6 @@ a {
 @media (max-width: 640px) {
   .lio-guide {
     gap: 10px;
-    animation-duration: 1s;
-  }
-
-  @keyframes lio-enter-center {
-    0% {
-      opacity: 0;
-      transform: translate(calc(-50% + 200px), calc(-50% + 160px)) scale(0.4);
-    }
-    100% {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
   }
 
   .lio-bubble {

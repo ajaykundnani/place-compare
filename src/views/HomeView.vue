@@ -392,7 +392,7 @@ function startDemo() {
         }, 3500)
       }, 3500)
     }, 3000)
-  }, 3500)
+  }, 1200)
 }
 
 watch([activeVideo, showMenuGallery, showReviewsModal, showAvgModal], () => {
@@ -745,8 +745,8 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
 
           </Teleport>
 
-          <Teleport v-if="showDemo" to="body">
-            <div class="demo-backdrop" @click.self="showDemo = false; demoStep = 0">
+          <Teleport to="body">
+            <div v-show="showDemo" class="demo-backdrop" @click.self="showDemo = false; demoStep = 0">
               <div class="lio-guide">
                 <div class="lio-avatar">
                   <svg viewBox="0 0 140 160" width="72" height="82" fill="none">
