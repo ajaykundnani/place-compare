@@ -745,70 +745,6 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
 
           </Teleport>
 
-          <Teleport to="body">
-            <div v-show="showDemo" class="demo-backdrop" @click.self="showDemo = false; demoStep = 0">
-              <div class="lio-guide">
-                <div class="lio-avatar">
-                  <svg viewBox="0 0 140 160" width="72" height="82" fill="none">
-                    <!-- Body -->
-                    <rect x="45" y="80" width="50" height="45" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
-                    <!-- Left arm -->
-                    <rect x="18" y="84" width="28" height="12" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" transform="rotate(12, 32, 90)" />
-                    <!-- Left hand -->
-                    <circle cx="20" cy="90" r="7" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
-                    <!-- Right arm -->
-                    <rect x="94" y="84" width="28" height="12" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" transform="rotate(-12, 108, 90)" />
-                    <!-- Right hand -->
-                    <circle cx="120" cy="90" r="7" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
-                    <!-- Left leg -->
-                    <rect x="52" y="123" width="14" height="24" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
-                    <!-- Left foot -->
-                    <ellipse cx="59" cy="148" rx="11" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
-                    <!-- Right leg -->
-                    <rect x="74" y="123" width="14" height="24" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
-                    <!-- Right foot -->
-                    <ellipse cx="81" cy="148" rx="11" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
-                    <!-- Head -->
-                    <circle cx="70" cy="50" r="38" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
-                    <!-- Left eye white -->
-                    <ellipse cx="58" cy="46" rx="8" ry="9" fill="#fff" stroke="#cbd5e1" stroke-width="1.5" />
-                    <!-- Right eye white -->
-                    <ellipse cx="82" cy="46" rx="8" ry="9" fill="#fff" stroke="#cbd5e1" stroke-width="1.5" />
-                    <!-- Left iris (blue) -->
-                    <circle cx="59" cy="47" r="5" fill="#3b82f6" />
-                    <!-- Right iris (blue) -->
-                    <circle cx="83" cy="47" r="5" fill="#3b82f6" />
-                    <!-- Left pupil -->
-                    <circle cx="60" cy="46" r="2" fill="#1e293b" />
-                    <!-- Right pupil -->
-                    <circle cx="84" cy="46" r="2" fill="#1e293b" />
-                    <!-- Eye shine left -->
-                    <circle cx="57" cy="44" r="1.5" fill="#fff" />
-                    <!-- Eye shine right -->
-                    <circle cx="81" cy="44" r="1.5" fill="#fff" />
-                    <!-- Eyebrows -->
-                    <path d="M49 36 Q58 32 67 36" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" fill="none" />
-                    <path d="M73 36 Q82 32 91 36" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" fill="none" />
-                    <!-- Rosy cheeks -->
-                    <ellipse cx="42" cy="58" rx="7" ry="4" fill="#fecaca" opacity="0.5" />
-                    <ellipse cx="98" cy="58" rx="7" ry="4" fill="#fecaca" opacity="0.5" />
-                    <!-- Smile -->
-                    <path d="M56 62 Q70 74 84 62" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" fill="none" />
-                    <!-- Nose -->
-                    <ellipse cx="70" cy="56" rx="2" ry="3" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="0.8" />
-                  </svg>
-                  <span class="lio-name">Lio</span>
-                </div>
-                <div class="lio-bubble">
-                  <p>{{ demoBubble }}</p>
-                  <div v-if="demoStep < 4" class="lio-typing">
-                    <span></span><span></span><span></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Teleport>
-
         </template>
 
         <div v-else class="empty-state">
@@ -842,6 +778,48 @@ watch(selectedAddress, (nextAddress, previousAddress) => {
       <button class="primary-button" disabled>Coming soon..</button>
     </section>
   </main>
+
+  <Teleport to="body">
+    <div v-show="showDemo" class="demo-backdrop">
+      <div class="lio-guide">
+        <div class="lio-avatar">
+          <svg viewBox="0 0 140 160" width="72" height="82" fill="none">
+            <rect x="45" y="80" width="50" height="45" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+            <rect x="18" y="84" width="28" height="12" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" transform="rotate(12, 32, 90)" />
+            <circle cx="20" cy="90" r="7" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+            <rect x="94" y="84" width="28" height="12" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" transform="rotate(-12, 108, 90)" />
+            <circle cx="120" cy="90" r="7" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+            <rect x="52" y="123" width="14" height="24" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+            <ellipse cx="59" cy="148" rx="11" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+            <rect x="74" y="123" width="14" height="24" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+            <ellipse cx="81" cy="148" rx="11" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+            <circle cx="70" cy="50" r="38" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+            <ellipse cx="58" cy="46" rx="8" ry="9" fill="#fff" stroke="#cbd5e1" stroke-width="1.5" />
+            <ellipse cx="82" cy="46" rx="8" ry="9" fill="#fff" stroke="#cbd5e1" stroke-width="1.5" />
+            <circle cx="59" cy="47" r="5" fill="#3b82f6" />
+            <circle cx="83" cy="47" r="5" fill="#3b82f6" />
+            <circle cx="60" cy="46" r="2" fill="#1e293b" />
+            <circle cx="84" cy="46" r="2" fill="#1e293b" />
+            <circle cx="57" cy="44" r="1.5" fill="#fff" />
+            <circle cx="81" cy="44" r="1.5" fill="#fff" />
+            <path d="M49 36 Q58 32 67 36" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" fill="none" />
+            <path d="M73 36 Q82 32 91 36" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" fill="none" />
+            <ellipse cx="42" cy="58" rx="7" ry="4" fill="#fecaca" opacity="0.5" />
+            <ellipse cx="98" cy="58" rx="7" ry="4" fill="#fecaca" opacity="0.5" />
+            <path d="M56 62 Q70 74 84 62" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" fill="none" />
+            <ellipse cx="70" cy="56" rx="2" ry="3" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="0.8" />
+          </svg>
+          <span class="lio-name">Lio</span>
+        </div>
+        <div class="lio-bubble">
+          <p>{{ demoBubble }}</p>
+          <div v-if="demoStep < 4" class="lio-typing">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 
   <Teleport to="body">
     <div v-if="showAvgModal" class="modal-overlay" @click.self="showAvgModal = false">

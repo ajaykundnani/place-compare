@@ -258,9 +258,11 @@ a {
 .lio-name {
   font-size: 0.7rem;
   font-weight: 800;
-  color: var(--accent);
+  color: #fff;
   letter-spacing: 0.02em;
 }
+
+
 
 @media (max-width: 640px) {
   .lio-guide {
