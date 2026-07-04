@@ -734,24 +734,15 @@ a {
   align-items: center;
   padding: 28px 32px;
   border-radius: 32px;
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.95), rgba(59, 130, 246, 0.9));
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
   color: white;
-  background-image: url('https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80');
-  background-size: cover;
-  background-position: center;
   position: relative;
   overflow: hidden;
 }
 
-.traffic-banner::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-}
-
 .traffic-text,
-.traffic-banner button {
+.traffic-banner button,
+.traffic-banner a {
   position: relative;
   z-index: 1;
 }
@@ -769,6 +760,20 @@ a {
 
 .traffic-banner .primary-button {
   white-space: nowrap;
+}
+
+.feedback-whatsapp {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  background: #25D366 !important;
+  box-shadow: 0 12px 24px rgba(37, 211, 102, 0.3) !important;
+  text-decoration: none;
+}
+
+.feedback-whatsapp:hover {
+  box-shadow: 0 16px 32px rgba(37, 211, 102, 0.4) !important;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 1120px) {
